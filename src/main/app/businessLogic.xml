@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd" version="EE-3.5.0">
+    
+    <batch:job name="syncBatch" >
+        <batch:threading-profile poolExhaustedAction="WAIT"/>
+        <batch:process-records>
+            
+            <batch:step name="getUserInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem'])]">
+                <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+f.setTimeZone(TimeZone.getTimeZone("UTC"));
+payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
+]]></expression-component>
+                <enricher source="#[payload.isEmpty() ? NullPayload.getInstance() : payload[0]]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
+                    <db:select config-ref="Database" doc:name="query user from B">
+                        <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
+                    </db:select>
+                </enricher>
+                <expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
+payload.remove('LastModifiedDate');
+
+// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
+profilesMap = ${from.A.to.B.profilesMap};
+if (profilesMap) {
+	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
+}
+]]></expression-component>
+            </batch:step>
+
+            <batch:step name="updateUsersInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || recordVars['userInTargetInstance'] is NullPayload || recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate'] || '${sfdc.integration.user.id}' == payload.get('LastModifiedById')]">
+                <expression-component doc:name="prepare user for update"><![CDATA[payload.put('Id', recordVars['userInTargetInstance'].get('Id'));
+]]></expression-component>
+                <batch:commit size="200" doc:name="Batch Commit">
+                    <db:update config-ref="Database" bulkMode="true" doc:name="update users in Database">
+                        <db:parameterized-query><![CDATA[UPDATE User SET
+	Id = #[payload['Id']],
+	AboutMe = #[payload['AboutMe']],
+	Alias = #[payload['Alias']],
+	City = #[payload['City']],
+	CompanyName = #[payload['CompanyName']],
+	Country = #[payload['Country']],
+	Department = #[payload['Department']],
+	Division = #[payload['Division']],
+	Email = #[payload['Email']],
+	EmailEncodingKey = #[payload['EmailEncodingKey']],
+	Fax = #[payload['Fax']],
+	FirstName = #[payload['FirstName']],
+	LanguageLocaleKey = #[payload['LanguageLocaleKey']],
+	LastModifiedById = CURRENT_USER,
+	LastModifiedDate = CURRENT_TIMESTAMP,
+	LastName = #[payload['LastName']],
+	LocaleSidKey = #[payload['LocaleSidKey']],
+	MobilePhone = #[payload['MobilePhone']],
+	Phone = #[payload['Phone']],
+	PostalCode = #[payload['PostalCode']],
+	State = #[payload['State']],
+	Street = #[payload['Street']],
+	TimeZoneSidKey = #[payload['TimeZoneSidKey']],
+	Title = #[payload['Title']],
+	Username = #[payload['Username']],
+	ProfileId = #[payload['ProfileId']]
+WHERE Id = #[payload['Id']]]]></db:parameterized-query>
+                    </db:update>
+                    <logger message="Update Database B response: #[payload]" level="INFO" doc:name="log response"/>
+                </batch:commit>
+            </batch:step>
+            <batch:step name="insertUsersToBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || !(recordVars['userInTargetInstance'] is NullPayload)]">
+                <expression-component doc:name="prepare user for insert"><![CDATA[// Each Username should be UNIQUE even between different sandboxes of a single instance
+payload.put('Username',  payload['Username'] + '.target');
+payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
+
+]]></expression-component>
+                <batch:commit size="200" doc:name="Batch Commit">
+                    <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
+                        <db:parameterized-query><![CDATA[INSERT INTO User (
+	Id,
+	AboutMe,
+	Alias,
+	City,
+	CompanyName,
+	Country,
+	Department,
+	Division,
+	Email,
+	EmailEncodingKey,
+	Fax,
+	FirstName,
+	LanguageLocaleKey,
+	LastModifiedById,
+	LastModifiedDate,
+	LastName,
+	LocaleSidKey,
+	MobilePhone,
+	Phone,
+	PostalCode,
+	State,
+	Street,
+	TimeZoneSidKey,
+	Title,
+	Username,
+	ProfileId
+) VALUES (
+	UUID(),
+	#[payload['AboutMe']],
+	#[payload['Alias']],
+	#[payload['City']],
+	#[payload['CompanyName']],
+	#[payload['Country']],
+	#[payload['Department']],
+	#[payload['Division']],
+	#[payload['Email']],
+	#[payload['EmailEncodingKey']],
+	#[payload['Fax']],
+	#[payload['FirstName']],
+	#[payload['LanguageLocaleKey']],
+	CURRENT_USER,
+	CURRENT_TIMESTAMP,
+	#[payload['LastName']],
+	#[payload['LocaleSidKey']],
+	#[payload['MobilePhone']],
+	#[payload['Phone']],
+	#[payload['PostalCode']],
+	#[payload['State']],
+	#[payload['Street']],
+	#[payload['TimeZoneSidKey']],
+	#[payload['Title']],
+	#[payload['Username']],
+	#[payload['ProfileId']]
+)]]></db:parameterized-query>
+                    </db:insert>
+                    <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
+                </batch:commit>
+            </batch:step>            
+            <batch:step name="getUserInAStep" filter-expression="#['A'.equals(flowVars['sourceSystem'])]">
+                <enricher source="#[payload]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
+                    <processor-chain doc:name="Processor Chain">
+                        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from A"/>
+                        <expression-component doc:name="Expression"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+f.setTimeZone(TimeZone.getTimeZone("UTC"));
+payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
+]]></expression-component>
+                    </processor-chain>
+                </enricher>
+            </batch:step>
+            
+            <batch:step name="upsertUserInAStep" filter-expression="#[('A'.equals(flowVars['sourceSystem'])) || (recordVars['userInTargetInstance'] is NullPayload ? false : (recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate']) || ('${db.integration.user.id}' == payload.get('LastModifiedById')))]">
+				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
+payload.remove('LastModifiedDate');
+
+if(!(recordVars['userInTargetInstance'] is NullPayload)) {
+	payload.put('Id',recordVars['userInTargetInstance'].get('Id'));
+	payload.remove('Username');
+} else {
+	// Each Username should be UNIQUE even between different sandboxes of a single instance
+	payload.put('Username',  payload['Username'] + '.target');
+	payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
+}
+
+// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
+profilesMap = ${from.B.to.A.profilesMap};
+if (profilesMap) {
+	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
+}
+]]></expression-component>
+                <batch:commit size="200" doc:name="Batch Commit">
+			        <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in A">
+			            <sfdc:objects ref="#[payload]"/>
+			        </sfdc:upsert>
+			        <logger message="Upsert Salesforce A response: #[payload]" level="INFO" doc:name="log response"/>
+                </batch:commit>
+            </batch:step>
+            
+        </batch:process-records>
+    </batch:job>
+    
+</mule>
