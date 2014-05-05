@@ -1,4 +1,4 @@
-# Anypoint Template: Salesforce to Salesforce bi-directional user sync
+# Anypoint Template: Salesforce to Database bi-directional user sync
 
 + [License Agreement](#licenseagreement)
 + [Use case](#usecase)
@@ -21,19 +21,19 @@ Please review the terms of the license before downloading and using this templat
 
 ## Use case <a name="usecase"/>
 
-As a Salesforce admin, I want to have my users synchronized between two different Salesforce organizations
+As a Salesforce admin, I want to have my users synchronized between Salesforce and Database organizations
 
 ## Template overview <a name="templateoverview"/>
 
-Let's say we want to keep Salesforce instance *A* synchronized with Salesforce instance *B*. Then, the integration behavior can be summarized just with the following steps:
+Let's say we want to keep Salesforce instance *A* synchronized with Database instance *B*. Then, the integration behavior can be summarized just with the following steps:
 
 1. Ask Salesforce *A*:
 > *Which changes have there been since the last time I got in touch with you?*
 
-2. For each of the updates fetched in the previous step (1.), ask Salesforce *B*:
+2. For each of the updates fetched in the previous step (1.), ask Database *B*:
 > *Does the update received from A should be applied?*
 
-3. If Salesforce answer for the previous question (2.) is *Yes*, then *upsert* (create or update depending each particular case) B with the belonging change
+3. If Database answer for the previous question (2.) is *Yes*, then *upsert* (create or update depending each particular case) B with the belonging change
 
 4. Repeat previous steps (1. to 3.) the other way around (using *B* as source instance and *A* as the target one)
 
@@ -45,7 +45,7 @@ Let's say we want to keep Salesforce instance *A* synchronized with Salesforce i
 And so on...
   
   
-The question for recent changes since a certain moment in nothing but a [poll inbound][1] with a [watermark][2] defined.
+The question for recent changes since a certain moment is nothing but a [poll inbound][1] with a [watermark][2] defined.
 
 
 # Run it! <a name="runit"/>
@@ -56,34 +56,40 @@ In order to have the template up and running just complete the two following ste
  2. [Configure the application properties](#propertiestobeconfigured)
  3. Run it! ([on premise](#runonopremise) or [in Cloudhub](#runoncloudhub))
 
+**Note:** This particular Anypoint Template illustrate the synchronization use case between SalesForce and a Database, thus it requires a DB instance to work.
+The Anypoint Template comes packaged with a SQL script to create the DB table that uses. 
+It is the user responsibility to use that script to create the table in an available schema and change the configuration accordingly.
+The SQL script file can be found in [src/main/resources/sfdc2jdbc.sql] (../master/src/main/resources/sfdc2jdbc.sql)
+
 ## A few Considerations <a name="afewconsiderations" />
 
 There are a couple of things you should take into account before running this kick:
 
 1. **Users cannot be deleted in SalesForce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
 2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. Check out the next section to define a map between Profile Ids (from the source account to the ones in the target account and the other way around).
-3. **Working with sandboxes for the same account**: Although each sandbox should be a completely different environment, Usernames cannot be repeated in different sandboxes, i.e. if you have a user with username *bob.dylan* in *sandbox A*, you will not be able to create another user with username *bob.dylan* in *sandbox B*. If you are indeed working with Sandboxes for the same SalesForce account you will need to map the source username to a different one in the target sandbox, for this purpose, please refer to the processor labeled *assign ProfileId and Username to the User*.
 
 ## Properties to be configured<a name="propertiestobeconfigured"/>
 
 ### Application configuration
 + polling.frequency `10000`  
-This are the miliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce
+This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
 
 + watermark.default.expression `2014-02-25T11:00:00.000Z`  
 This property is an important one, as it configures what should be the start point of the synchronization.The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC][3]
 
 ### SalesForce Connector configuration for company A
-+ sfdc.a.username `jorge.drexler@mail.com`
-+ sfdc.a.password `Noctiluca123`
-+ sfdc.a.securityToken `avsfwCUl7apQs56Xq2AKi3X`
-+ sfdc.a.url `https://login.salesforce.com/services/Soap/u/28.0`
++ sfdc.username `jorge.drexler@mail.com`
++ sfdc.password `Noctiluca123`
++ sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
++ sfdc.url `https://login.salesforce.com/services/Soap/u/28.0`
++ sfdc.integration.user.id `005n0000000T3QkAAK`
 
-### SalesForce Connector configuration for company B
-+ sfdc.b.username `mariano.cozzi@mail.com`
-+ sfdc.b.password `LaRanitaDeLaBicicleta456`
-+ sfdc.b.securityToken `ces56arl7apQs56XTddf34X`
-+ sfdc.b.url `https://login.salesforce.com/services/Soap/u/28.0`
+### Database Connector configuration for company B
++ db.username `mule`
++ db.password `mule`
++ db.url=jdbc:mysql://localhost:3306/mule
++ db.driverClassName=com.mysql.jdbc.Driver
++ db.integration.user.id=mule@localhost
 
 + from.A.to.B.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 + from.B.to.A.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
@@ -118,21 +124,21 @@ Here is a list of the main XML files you'll find in this application:
 
 ## config.xml<a name="configxml"/>
 This file holds the configuration for Connectors and [Properties Place Holders][6]. 
-Although you can update the configuration properties here, we highly recommend to keep them parametrized and modified them in the belonging property files.
+Although you can update the configuration properties here, we highly recommend to keep them parameterized and modified them in the belonging property files.
 
 For this particular template, what you will find in the config file is
-* the configuration for the two Salesforce instances that are being synced
+* the configuration for the two Salesforce and Database instances that are being synced
 * the property place holder configuration
 
 In order to find the mentioned configuration, you should check out the [*Global Element* tab][7].
 
 
 ## endpoints.xml<a name="endpointsxml"/> 
-This file should contain every inbound and outbound endpoint of your integration app. It is intented to contain the application API.
-In this particular template, this file contains a couple of poll inbound endpoints that query salesforce for updates using watermark as mentioned before.
+This file should contain every inbound and outbound endpoint of your integration app. It is intended to contain the application API.
+In this particular template, this file contains a couple of poll inbound endpoints that query salesforce and database for updates using watermark as mentioned before.
 
 ## businessLogic.xml<a name="businesslogicxml"/>
-This file holds the functional aspect of the template (points 2. to 4. described in the [template overview](#templateoverview)). Its main component is a [*Batch job*][8], and it includes *steps* for both executing the synchronization from Salesforce instance A to Salesforce instance B, and the other way around.
+This file holds the functional aspect of the template (points 2. to 4. described in the [template overview](#templateoverview)). Its main component is a [*Batch job*][8], and it includes *steps* for both executing the synchronization from Salesforce instance A to Database instance B, and the other way around.
 
 
 ## errorHandling.xml<a name="errorhandlingxml"/>
