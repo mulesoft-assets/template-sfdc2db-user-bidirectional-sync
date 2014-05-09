@@ -146,10 +146,11 @@ payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
                 <enricher source="#[payload]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
                     <processor-chain doc:name="Processor Chain">
                         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from A"/>
-                        <expression-component doc:name="Expression"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-f.setTimeZone(TimeZone.getTimeZone("UTC"));
-payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
-]]></expression-component>
+                        <expression-component doc:name="Expression"><![CDATA[if (!(payload is NullPayload)) {
+	f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	f.setTimeZone(TimeZone.getTimeZone("UTC"));
+	payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
+}]]></expression-component>
                     </processor-chain>
                 </enricher>
             </batch:step>
@@ -157,6 +158,7 @@ payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
             <batch:step name="upsertUserInAStep" filter-expression="#[('A'.equals(flowVars['sourceSystem'])) || (recordVars['userInTargetInstance'] is NullPayload ? false : (recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate']) || ('${db.integration.user.id}' == payload.get('LastModifiedById')))]">
 				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
 payload.remove('LastModifiedDate');
+payload.remove('LastModifiedById');
 
 if(!(recordVars['userInTargetInstance'] is NullPayload)) {
 	payload.put('Id',recordVars['userInTargetInstance'].get('Id'));

@@ -38,6 +38,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
                 <db:parameterized-query><![CDATA[SELECT AboutMe,Alias,City,CompanyName,Country,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate > #[flowVars['lastQueryDateB']] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
             </db:select>
 		</poll>
+        <logger message="Foo: #[payload]" level="INFO" category="FOOFOO2" doc:name="Logger"/>
         <set-variable variableName="sourceSystem" value="B" doc:name="set B as source system" />
         <batch:execute name="syncBatch" doc:name="trigger batch execution"/>
     </flow>

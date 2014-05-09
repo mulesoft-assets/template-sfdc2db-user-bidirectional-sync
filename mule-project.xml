@@ -3,4 +3,5 @@
     <name>template-sfdc2sfdc-user-bidirectional-sync</name>
     <description></description>
     <muleExtension name="ObjectStore" qualifier="org.mule.tooling.ui.contribution.objectstore"/>
+    <muleExtension name="Salesforce" qualifier="org.mule.tooling.ui.contribution.sfdc"/>
 </mule-project>
