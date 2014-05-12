@@ -213,11 +213,6 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 			idList.add(c.get("Id").toString());
 		}
 		
-<<<<<<< HEAD
-=======
-		System.out.println("zab: " + deleteFlow + ", " + idList);
-
->>>>>>> 839bba54e0d9081d8fd3d5a1f4bb62e512e1a1a6
 		deleteFlow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 
