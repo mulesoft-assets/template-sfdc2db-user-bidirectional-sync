@@ -20,7 +20,15 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
 			<watermark variable="lastQueryDateA" default-expression="${watermark.default.expression}" selector="MIN" selector-expression="#[payload.LastModifiedDate]" />
+<<<<<<< HEAD
             <sfdc:query config-ref="Salesforce" query="SELECT AboutMe,Alias,City,CompanyName,Country,CommunityNickname,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from A"/>
+=======
+            <processor-chain doc:name="Processor Chain">
+                <logger message="#[flowVars['lastQueryDateA']]" level="INFO" category="fooX" doc:name="Logger"/>
+                <sfdc:query config-ref="Salesforce" query="SELECT AboutMe,Alias,City,CompanyName,Country,CommunityNickname,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from A"/>
+                <logger message="#[payload.size()]" level="INFO" category="fooA" doc:name="Logger"/>
+            </processor-chain>
+>>>>>>> 839bba54e0d9081d8fd3d5a1f4bb62e512e1a1a6
 		</poll>
         <expression-component doc:name="convert lastQueryDateA to Date"><![CDATA[// f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 // f.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -34,9 +42,18 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
    		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
 			<watermark variable="lastQueryDateB" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
+<<<<<<< HEAD
             <db:select config-ref="Database" doc:name="fetch users from B">
                 <db:parameterized-query><![CDATA[SELECT AboutMe,Alias,City,CompanyName,CommunityNickname,Country,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate > #[flowVars['lastQueryDateB']] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
             </db:select>
+=======
+            <processor-chain doc:name="Processor Chain">
+                <logger message="#[flowVars['lastQueryDateB']]" level="INFO" category="fooY" doc:name="Logger"/>
+                <db:select config-ref="Database" doc:name="fetch users from B">
+                    <db:parameterized-query><![CDATA[SELECT AboutMe,Alias,City,CompanyName,CommunityNickname,Country,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate > #[flowVars['lastQueryDateB']] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
+                </db:select>
+            </processor-chain>
+>>>>>>> 839bba54e0d9081d8fd3d5a1f4bb62e512e1a1a6
 		</poll>
         <set-variable variableName="sourceSystem" value="B" doc:name="set B as source system" />
         <batch:execute name="syncBatch" doc:name="trigger batch execution"/>
