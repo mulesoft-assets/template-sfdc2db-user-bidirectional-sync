@@ -36,6 +36,7 @@ if (profilesMap) {
 	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
 }
 ]]></expression-component>
+                <logger message="#[recordVars['userInTargetInstance']]" level="INFO" category="jebo3" doc:name="Logger"/>
             </batch:step>
 
             <batch:step name="updateUsersInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || recordVars['userInTargetInstance'] is NullPayload || recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate'] || '${sfdc.integration.user.id}' == payload.get('LastModifiedById')]">
@@ -82,6 +83,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
 //payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
 
 ]]></expression-component>
+                <logger message="#[payload]" level="INFO" category="jebo4" doc:name="Logger"/>
                 <batch:commit size="200" doc:name="Batch Commit">
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
                         <db:parameterized-query><![CDATA[INSERT INTO User (
