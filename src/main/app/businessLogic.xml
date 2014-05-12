@@ -36,7 +36,6 @@ if (profilesMap) {
 	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
 }
 ]]></expression-component>
-                <logger message="#[recordVars['userInTargetInstance']]" level="INFO" category="jebo3" doc:name="Logger"/>
             </batch:step>
 
             <batch:step name="updateUsersInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || recordVars['userInTargetInstance'] is NullPayload || recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate'] || '${sfdc.integration.user.id}' == payload.get('LastModifiedById')]">
@@ -78,12 +77,6 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                 </batch:commit>
             </batch:step>
             <batch:step name="insertUsersToBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || !(recordVars['userInTargetInstance'] is NullPayload)]">
-                <expression-component doc:name="prepare user for insert"><![CDATA[// Each Username should be UNIQUE even between different sandboxes of a single instance
-//payload.put('Username',  payload['Username'] + '.target');
-//payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
-
-]]></expression-component>
-                <logger message="#[payload]" level="INFO" category="jebo4" doc:name="Logger"/>
                 <batch:commit size="200" doc:name="Batch Commit">
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
                         <db:parameterized-query><![CDATA[INSERT INTO User (
@@ -168,10 +161,6 @@ payload.remove('LastModifiedById');
 if(!(recordVars['userInTargetInstance'] is NullPayload)) {
 	payload.put('Id',recordVars['userInTargetInstance'].get('Id'));
 	payload.remove('Username');
-} else {
-	// Each Username should be UNIQUE even between different sandboxes of a single instance
-//	payload.put('Username',  payload['Username'] + '.target');
-//	payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
 }
 
 // We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
