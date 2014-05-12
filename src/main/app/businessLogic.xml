@@ -69,7 +69,8 @@ if (profilesMap) {
 	TimeZoneSidKey = #[payload['TimeZoneSidKey']],
 	Title = #[payload['Title']],
 	Username = #[payload['Username']],
-	ProfileId = #[payload['ProfileId']]
+	ProfileId = #[payload['ProfileId']],
+	CommunityNickname = #[payload['CommunityNickname']]
 WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     </db:update>
                     <logger message="Update Database B response: #[payload]" level="INFO" doc:name="log response"/>
@@ -77,8 +78,8 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
             </batch:step>
             <batch:step name="insertUsersToBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || !(recordVars['userInTargetInstance'] is NullPayload)]">
                 <expression-component doc:name="prepare user for insert"><![CDATA[// Each Username should be UNIQUE even between different sandboxes of a single instance
-payload.put('Username',  payload['Username'] + '.target');
-payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
+//payload.put('Username',  payload['Username'] + '.target');
+//payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
 
 ]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
@@ -109,7 +110,8 @@ payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
 	TimeZoneSidKey,
 	Title,
 	Username,
-	ProfileId
+	ProfileId,
+	CommunityNickname
 ) VALUES (
 	UUID(),
 	#[payload['AboutMe']],
@@ -136,7 +138,8 @@ payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
 	#[payload['TimeZoneSidKey']],
 	#[payload['Title']],
 	#[payload['Username']],
-	#[payload['ProfileId']]
+	#[payload['ProfileId']],
+	#[payload['CommunityNickname']]
 )]]></db:parameterized-query>
                     </db:insert>
                     <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
@@ -165,8 +168,8 @@ if(!(recordVars['userInTargetInstance'] is NullPayload)) {
 	payload.remove('Username');
 } else {
 	// Each Username should be UNIQUE even between different sandboxes of a single instance
-	payload.put('Username',  payload['Username'] + '.target');
-	payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
+//	payload.put('Username',  payload['Username'] + '.target');
+//	payload.put('CommunityNickname',  payload['CommunityNickname'] + '.target');
 }
 
 // We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)

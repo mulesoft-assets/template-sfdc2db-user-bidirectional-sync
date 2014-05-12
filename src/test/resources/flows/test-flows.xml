@@ -12,8 +12,8 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 
-	<sub-flow name="updateUserInAFlow" doc:name="updateUserInAFlow">
-         <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="Update user in A">
+	<sub-flow name="upsertUserInAFlow" doc:name="upsertUserInAFlow">
+         <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="Upsert user in A">
              <sfdc:objects ref="#[payload]"/>
          </sfdc:upsert>
         <logger level="INFO" message="Update User in A result: #[payload]" doc:name="Logger"/>
@@ -54,7 +54,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
     </sub-flow>
     
     <sub-flow name="queryUserFromAFlow" doc:name="queryUserFromAFlow">
-        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey FROM User WHERE Email = '#[payload['Email']]'" doc:name="Query user from Salesforce"/>
+        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, CommunityNickname FROM User WHERE Email = '#[payload['Email']]'" doc:name="Query user from Salesforce"/>
         <logger level="INFO" message="Query user from A result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     
@@ -96,7 +96,8 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
 	TimeZoneSidKey,
 	Title,
 	Username,
-	ProfileId
+	ProfileId,
+	CommunityNickname
 ) VALUES (
 	#[payload['Id']],
 	#[payload['AboutMe']],
@@ -123,7 +124,8 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
 	#[payload['TimeZoneSidKey']],
 	#[payload['Title']],
 	#[payload['Username']],
-	#[payload['ProfileId']]
+	#[payload['ProfileId']],
+	#[payload['CommunityNickname']]
 )]]></db:parameterized-query>
                     </db:insert>
         <logger message="Insert user to B result: #[payload]" level="INFO" doc:name="Logger"/>
