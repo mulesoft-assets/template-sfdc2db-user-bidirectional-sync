@@ -74,8 +74,6 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	@After
 	public void tearDown() throws Exception {
-		deleteTestAccountsFromSandBoxA(createdUsersInB);
-		deleteTestAccountsFromSandBoxB(createdUsersInB);
 	}
 
 	private void stopAutomaticPollTriggering() throws MuleException {
@@ -103,6 +101,8 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	@Test
 	public void whenUpdatingAnUserInInstanceBTheBelongingUserGetsUpdatedInInstanceA() throws MuleException, Exception {
+		// test db -> sfdc
+
 		Map<String, Object> user_0_B = new HashMap<String, Object>();
 		String infixB = "_0_B_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
 		user_0_B.put("Id", UUID.getUUID());
@@ -121,16 +121,23 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		
 		insertUserInBFlow.process(getTestEvent(user_0_B, MessageExchangePattern.REQUEST_RESPONSE));
 	
+		Thread.sleep(1001);
+		
 		// Execution
 		executeWaitAndAssertBatchJob(B_INBOUND_FLOW_NAME);
 
 		// Assertions
-		Map<String, Object> payload = (Map<String, Object>) queryUser(user_0_B, queryUserFromBFlow);
+		Map<String, Object> payload = (Map<String, Object>) queryUser(user_0_B, queryUserFromBFlow); // TODO test NullPayload
 		Assert.assertNotNull("Synchronized user should not be null", payload);
 		Assert.assertEquals("The user should have been sync and new name must match", user_0_B.get("FirstName"), payload.get("FirstName"));
 		Assert.assertEquals("The user should have been sync and new title must match", user_0_B.get("LastName"), payload.get("LastName"));
-		
 
+		// cleanup
+		deleteTestUsersFromSandBoxA(createdUsersInB); // will fail because user can't be deleted from SFDC
+		deleteTestUsersFromSandBoxB(createdUsersInB);
+
+		// test sfdc -> db
+		
 		Map<String, Object> user_0_A = new HashMap<String, Object>();
 		String infixA = "_0_A_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
 		user_0_A.put("Username", "Name" + infixA + "@example.com");
@@ -149,11 +156,20 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		MuleEvent event = upsertUserInAFlow.process(getTestEvent(Collections.singletonList(user_0_A), MessageExchangePattern.REQUEST_RESPONSE));
 		user_0_A.put("Id", (((UpsertResult) ((List<?>) event.getMessage().getPayload()).get(0))).getId());
 
-		// Execution
-		System.out.println("foo: " + System.currentTimeMillis());
-		executeWaitAndAssertBatchJob(A_INBOUND_FLOW_NAME);
-		System.out.println("bar: " + System.currentTimeMillis());
+		Thread.sleep(1001);
 
+		// Execution
+		executeWaitAndAssertBatchJob(A_INBOUND_FLOW_NAME);
+
+		Map<String, Object> payload1 = (Map<String, Object>) queryUser(user_0_A, queryUserFromBFlow); // TODO test NullPayload
+		Assert.assertNotNull("Synchronized user should not be null", payload1);
+		Assert.assertEquals("The user should have been sync and new name must match", user_0_A.get("FirstName"), payload1.get("FirstName"));
+		Assert.assertEquals("The user should have been sync and new title must match", user_0_A.get("LastName"), payload1.get("LastName"));
+		
+		// cleanup
+		SubflowInterceptingChainLifecycleWrapper deleteUsersAfterSfdc2Db = getSubFlow("deleteUsersAfterSfdc2Db");
+		deleteUsersAfterSfdc2Db.initialise();
+		deleteUsersAfterSfdc2Db.process(getTestEvent(createdUsersInA, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 
 	private Object queryUser(Map<String, Object> user, InterceptingChainLifecycleWrapper queryUserFlow) throws MuleException, Exception {
@@ -169,23 +185,23 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		batchTestHelper.assertJobWasSuccessful();
 	}
 	
-	private void deleteTestAccountsFromSandBoxB(List<Map<String, Object>> createdAccountsInA) throws InitialisationException, MuleException, Exception {
-		SubflowInterceptingChainLifecycleWrapper deleteAccountFromBFlow = getSubFlow("deleteUserFromBFlow");
-		deleteAccountFromBFlow.initialise();
-		deleteTestEntityFromSandBox(deleteAccountFromBFlow, createdAccountsInA);
+	private void deleteTestUsersFromSandBoxB(List<Map<String, Object>> createdUsersInA) throws InitialisationException, MuleException, Exception {
+		SubflowInterceptingChainLifecycleWrapper deleteUserFromBFlow = getSubFlow("deleteUserFromBFlow");
+		deleteUserFromBFlow.initialise();
+		deleteTestEntityFromSandBox(deleteUserFromBFlow, createdUsersInA);
 	}
 
-	private void deleteTestAccountsFromSandBoxA(List<Map<String, Object>> createdUsersInB) throws InitialisationException, MuleException, Exception {
+	private void deleteTestUsersFromSandBoxA(List<Map<String, Object>> createdUsersInB) throws InitialisationException, MuleException, Exception {
 		List<Map<String, Object>> createdUsersInA = new ArrayList<Map<String, Object>>();
 		for (Map<String, Object> c : createdUsersInB) {
-			Map<String, Object> account = invokeRetrieveFlow(queryUserFromAFlow, c);
-			if (account != null) {
-				createdUsersInA.add(account);
+			Map<String, Object> user = invokeRetrieveFlow(queryUserFromAFlow, c);
+			if (user != null) {
+				createdUsersInA.add(user);
 			}
 		}
-		SubflowInterceptingChainLifecycleWrapper deleteAccountFromAFlow = getSubFlow("deleteUserFromAFlow");
-		deleteAccountFromAFlow.initialise();
-		deleteTestEntityFromSandBox(deleteAccountFromAFlow, createdUsersInA);
+		SubflowInterceptingChainLifecycleWrapper deleteUserFromAFlow = getSubFlow("deleteUserFromAFlow");
+		deleteUserFromAFlow.initialise();
+		deleteTestEntityFromSandBox(deleteUserFromAFlow, createdUsersInA);
 	}
 	
 	private void deleteTestEntityFromSandBox(SubflowInterceptingChainLifecycleWrapper deleteFlow, List<Map<String, Object>> entitities) throws MuleException, Exception {
@@ -193,6 +209,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		for (Map<String, Object> c : entitities) {
 			idList.add(c.get("Id").toString());
 		}
+		
 		deleteFlow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 

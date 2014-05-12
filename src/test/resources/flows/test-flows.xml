@@ -135,12 +135,18 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
         <sfdc:delete config-ref="Salesforce" doc:name="Delete user from Salesforce">
             <sfdc:ids ref="#[payload]"/>
         </sfdc:delete>
-        <logger message="#[payload]" level="INFO" category="FOFO" doc:name="Logger"/>
     </sub-flow>
     <sub-flow name="deleteUserFromBFlow" doc:name="deleteUserFromBFlow">
         <foreach doc:name="For Each">
             <db:delete config-ref="Database" doc:name="Delete user from Database">
                 <db:parameterized-query><![CDATA[DELETE FROM User WHERE Id = #[payload]]]></db:parameterized-query>
+            </db:delete>
+        </foreach>
+    </sub-flow>
+    <sub-flow name="deleteUsersAfterSfdc2Db" doc:name="deleteUsersAfterSfdc2Db">
+        <foreach doc:name="For Each">
+            <db:delete config-ref="Database" doc:name="Database">
+                <db:parameterized-query><![CDATA[DELETE FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
             </db:delete>
         </foreach>
     </sub-flow>
