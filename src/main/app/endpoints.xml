@@ -22,10 +22,6 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 			<watermark variable="lastQueryDateA" default-expression="${watermark.default.expression}" selector="MIN" selector-expression="#[payload.LastModifiedDate]" />
             <sfdc:query config-ref="Salesforce" query="SELECT AboutMe,Alias,City,CompanyName,Country,CommunityNickname,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from A"/>
 		</poll>
-        <expression-component doc:name="convert lastQueryDateA to Date"><![CDATA[// f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-// f.setTimeZone(TimeZone.getTimeZone("UTC"));
-// lastQueryDateA = f.parse(lastQueryDateA);
-]]></expression-component>
         <set-variable variableName="sourceSystem" value="A" doc:name="set A as source system" />
         <batch:execute name="syncBatch" doc:name="trigger batch execution"/>
     </flow>

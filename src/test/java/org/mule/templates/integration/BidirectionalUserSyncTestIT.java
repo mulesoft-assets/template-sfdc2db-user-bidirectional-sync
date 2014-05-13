@@ -127,10 +127,13 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		executeWaitAndAssertBatchJob(B_INBOUND_FLOW_NAME);
 
 		// Assertions
-		Map<String, Object> payload = (Map<String, Object>) queryUser(user_0_B, queryUserFromBFlow); // TODO test NullPayload
-		Assert.assertNotNull("Synchronized user should not be null", payload);
-		Assert.assertEquals("The user should have been sync and new name must match", user_0_B.get("FirstName"), payload.get("FirstName"));
-		Assert.assertEquals("The user should have been sync and new title must match", user_0_B.get("LastName"), payload.get("LastName"));
+		{
+			Object object =  queryUser(user_0_B, queryUserFromBFlow);
+			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
+			Map<String, Object> payload = (Map<String, Object>) object;
+			Assert.assertEquals("The user should have been sync and new name must match", user_0_B.get("FirstName"), payload.get("FirstName"));
+			Assert.assertEquals("The user should have been sync and new title must match", user_0_B.get("LastName"), payload.get("LastName"));
+		}
 
 		// cleanup
 		deleteTestUsersFromSandBoxA(createdUsersInB); // will fail because user can't be deleted from SFDC
@@ -161,10 +164,17 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		// Execution
 		executeWaitAndAssertBatchJob(A_INBOUND_FLOW_NAME);
 
-		Map<String, Object> payload1 = (Map<String, Object>) queryUser(user_0_A, queryUserFromBFlow); // TODO test NullPayload
-		Assert.assertNotNull("Synchronized user should not be null", payload1);
-		Assert.assertEquals("The user should have been sync and new name must match", user_0_A.get("FirstName"), payload1.get("FirstName"));
-		Assert.assertEquals("The user should have been sync and new title must match", user_0_A.get("LastName"), payload1.get("LastName"));
+		// FIXME above call does not wait for batch to complete
+		Thread.sleep(10000);
+		
+		// Assertions
+		{
+			Object object = queryUser(user_0_A, queryUserFromBFlow);
+			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
+			Map<String, Object> payload = (Map<String, Object>) object;
+			Assert.assertEquals("The user should have been sync and new name must match", user_0_A.get("FirstName"), payload.get("FirstName"));
+			Assert.assertEquals("The user should have been sync and new title must match", user_0_A.get("LastName"), payload.get("LastName"));
+		}
 		
 		// cleanup
 		SubflowInterceptingChainLifecycleWrapper deleteUsersAfterSfdc2Db = getSubFlow("deleteUsersAfterSfdc2Db");
