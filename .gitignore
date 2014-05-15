@@ -61,7 +61,6 @@ src/main/app/test-flows.xml
 # --------------------------------------- #
 src/test/resources/mule.test.properties
 src/main/resources/mule.test.properties
-src/main/resources/mule.dev.properties
 
 # ------------ #
 # System files #
