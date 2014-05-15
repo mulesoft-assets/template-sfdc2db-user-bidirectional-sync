@@ -59,7 +59,14 @@ In order to have the template up and running just complete the two following ste
 **Note:** This particular Anypoint Template illustrate the synchronization use case between SalesForce and a Database, thus it requires a DB instance to work.
 The Anypoint Template comes packaged with a SQL script to create the DB table that uses. 
 It is the user responsibility to use that script to create the table in an available schema and change the configuration accordingly.
-The SQL script file can be found in [src/main/resources/sfdc2jdbc.sql] (../master/src/main/resources/sfdc2jdbc.sql)
+The SQL script file can be found in [src/main/resources/sfdc2jdbc.sql](../master/src/main/resources/sfdc2jdbc.sql)
+
+This template is customized for MySQL. To use it with different SQL implementation, some changes are necessary:
+
+* update SQL script dialect to desired one
+* replace MySQL driver library dependency to desired one in [POM](pom.xml)
+* replace attribute `driverClassName` of `db:generic-config` element with class name of desired JDBC driver in [src/main/app/config.xml](../master/src/main/app/config.xml)
+* update JDBC URL in `mule.*.properties` file
 
 ## A few Considerations <a name="afewconsiderations" />
 
@@ -85,11 +92,8 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.integration.user.id `005n0000000T3QkAAK`
 
 ### Database Connector configuration for company B
-+ db.username `mule`
-+ db.password `mule`
-+ db.url=jdbc:mysql://localhost:3306/mule
-+ db.driverClassName=com.mysql.jdbc.Driver
-+ db.integration.user.id=mule@localhost
++ db.jdbcUrl `jdbc:mysql://localhost:3306/mule?user=mule&password=mule`
++ db.integration.user.id `mule@localhost`
 
 + from.A.to.B.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 + from.B.to.A.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
