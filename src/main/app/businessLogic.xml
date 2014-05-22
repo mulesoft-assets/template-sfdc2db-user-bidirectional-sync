@@ -17,7 +17,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
             
-            <batch:step name="getUserInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem'])]">
+            <batch:step name="getUserInBStep" accept-expression="#['A'.equals(flowVars['sourceSystem'])]">
                 <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 f.setTimeZone(TimeZone.getTimeZone("UTC"));
 payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
@@ -35,7 +35,7 @@ if (profilesMap) {
 ]]></expression-component>
             </batch:step>
 
-            <batch:step name="updateUsersInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || recordVars['userInTargetInstance'] is NullPayload || recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate'] || '${sfdc.integration.user.id}' == payload.get('LastModifiedById')]">
+            <batch:step name="updateUsersInBStep" accept-expression="#['A'.equals(flowVars['sourceSystem']) &amp;&amp; !(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById')]">
                 <expression-component doc:name="prepare user for update"><![CDATA[payload.put('Id', recordVars['userInTargetInstance'].get('Id'));
 ]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
@@ -73,7 +73,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     <logger message="Update Database B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>
-            <batch:step name="insertUsersToBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || !(recordVars['userInTargetInstance'] is NullPayload)]">
+            <batch:step name="insertUsersToBStep" accept-expression="#['A'.equals(flowVars['sourceSystem']) &amp;&amp; recordVars['userInTargetInstance'] is NullPayload]">
                 <batch:commit size="200" doc:name="Batch Commit">
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
                         <db:parameterized-query><![CDATA[INSERT INTO User (
@@ -137,7 +137,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>            
-            <batch:step name="getUserInAStep" filter-expression="#['A'.equals(flowVars['sourceSystem'])]">
+            <batch:step name="getUserInAStep" accept-expression="#['B'.equals(flowVars['sourceSystem'])]">
                 <enricher source="#[payload]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
                     <processor-chain doc:name="Processor Chain">
                         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from A"/>
@@ -150,7 +150,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                 </enricher>
             </batch:step>
             
-            <batch:step name="upsertUserInAStep" filter-expression="#[('A'.equals(flowVars['sourceSystem'])) || (recordVars['userInTargetInstance'] is NullPayload ? false : (recordVars['userInTargetInstance']['LastModifiedDate'] &gt;= payload['LastModifiedDate']) || ('${db.integration.user.id}' == payload.get('LastModifiedById')))]">
+            <batch:step name="upsertUserInAStep" accept-expression="#['B'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['userInTargetInstance'] is NullPayload || (recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')))]">
 				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
 payload.remove('LastModifiedDate');
 payload.remove('LastModifiedById');
