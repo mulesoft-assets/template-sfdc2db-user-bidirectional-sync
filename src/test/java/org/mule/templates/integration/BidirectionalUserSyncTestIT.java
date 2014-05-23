@@ -119,7 +119,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		user_0_B.put("CommunityNickname", "cn" + infixB);
 		createdUsersInB.add(user_0_B);
 		
-		insertUserInBFlow.process(getTestEvent(user_0_B, MessageExchangePattern.REQUEST_RESPONSE));
+		insertUserInBFlow.process(getTestEvent(Collections.singletonList(user_0_B), MessageExchangePattern.REQUEST_RESPONSE));
 	
 		Thread.sleep(1001);
 		
