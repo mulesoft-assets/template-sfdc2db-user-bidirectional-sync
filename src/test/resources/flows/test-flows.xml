@@ -12,14 +12,14 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 
-	<sub-flow name="upsertUserInAFlow" doc:name="upsertUserInAFlow">
-         <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="Upsert user in A">
+	<sub-flow name="upsertUserInSalesforceFlow" doc:name="upsertUserInSalesforceFlow">
+         <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="Upsert user in Salesforce">
              <sfdc:objects ref="#[payload]"/>
          </sfdc:upsert>
-        <logger level="INFO" message="Update User in A result: #[payload]" doc:name="Logger"/>
+        <logger level="INFO" message="Update User in Salesforce result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     
-	<sub-flow name="updateUserInBFlow" doc:name="updateUserInBFlow">
+	<sub-flow name="updateUserInDatabaseFlow" doc:name="updateUserInDatabaseFlow">
                     <db:update config-ref="Database" bulkMode="true" doc:name="update users in Database">
                         <db:parameterized-query><![CDATA[UPDATE User SET
 	Id = #[payload['Id']],
@@ -53,12 +53,12 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
         <logger level="INFO" message="Update User in B result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     
-    <sub-flow name="queryUserFromAFlow" doc:name="queryUserFromAFlow">
+    <sub-flow name="queryUserFromSalesforceFlow" doc:name="queryUserFromSalesforceFlow">
         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, CommunityNickname FROM User WHERE Email = '#[payload['Email']]'" doc:name="Query user from Salesforce"/>
         <logger level="INFO" message="Query user from A result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     
-    <sub-flow name="queryUserFromBFlow" doc:name="queryUserFromBFlow">
+    <sub-flow name="queryUserFromDatabaseFlow" doc:name="queryUserFromDatabaseFlow">
                 <enricher source="#[payload.isEmpty() ? NullPayload.getInstance() : payload[0]]" target="#[payload]" doc:name="store user">
                     <db:select config-ref="Database" doc:name="Query user from Database">
                 <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
@@ -68,7 +68,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
 <!--         <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey FROM User WHERE Email = '#[payload['Email']]'" doc:name="Query user in B"/> -->
         <logger level="INFO" message="Query user from B result: #[payload]" doc:name="Logger"/>
     </sub-flow>
-    <sub-flow name="insertUserInBFlow" doc:name="insertUserInBFlow">
+    <sub-flow name="insertUserInDatabaseFlow" doc:name="insertUserInDatabaseFlow">
                     <db:insert config-ref="Database" bulkMode="true" doc:name="Insert user to Database">
             <db:parameterized-query><![CDATA[INSERT INTO User (
 	Id,
@@ -131,19 +131,19 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
         <logger message="Insert user to B result: #[payload]" level="INFO" doc:name="Logger"/>
     
     </sub-flow>
-    <sub-flow name="deleteUserFromAFlow" doc:name="deleteUserFromAFlow">
+    <sub-flow name="deleteUserFromSalesforceFlow" doc:name="deleteUserFromSalesforceFlow">
         <sfdc:delete config-ref="Salesforce" doc:name="Delete user from Salesforce">
             <sfdc:ids ref="#[payload]"/>
         </sfdc:delete>
     </sub-flow>
-    <sub-flow name="deleteUserFromBFlow" doc:name="deleteUserFromBFlow">
+    <sub-flow name="deleteUserFromDatabaseFlow" doc:name="deleteUserFromDatabaseFlow">
         <foreach doc:name="For Each">
             <db:delete config-ref="Database" doc:name="Delete user from Database">
                 <db:parameterized-query><![CDATA[DELETE FROM User WHERE Id = #[payload]]]></db:parameterized-query>
             </db:delete>
         </foreach>
     </sub-flow>
-    <sub-flow name="deleteUsersAfterSfdc2Db" doc:name="deleteUsersAfterSfdc2Db">
+    <sub-flow name="deleteUsersAfterSfdc2Database" doc:name="deleteUsersAfterSfdc2Database">
         <foreach doc:name="For Each">
             <db:delete config-ref="Database" doc:name="Database">
                 <db:parameterized-query><![CDATA[DELETE FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>

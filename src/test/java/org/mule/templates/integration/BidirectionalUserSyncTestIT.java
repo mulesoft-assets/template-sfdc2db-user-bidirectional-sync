@@ -36,19 +36,25 @@ import com.sforce.soap.partner.UpsertResult;
 @SuppressWarnings("unchecked")
 public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
-	private static final String ANYPOINT_TEMPLATE_NAME = "usr-bidi-sync";
-	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
-	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
+	private static final String VAR_ID = "Id";
+	private static final String VAR_USERNAME = "Username";
+	private static final String VAR_LAST_NAME = "LastName";
+	private static final String VAR_FIRST_NAME = "FirstName";
+	private static final String VAR_EMAIL = "Email";
+	
+	private static final String ANYPOINT_TEMPLATE_NAME = "userBiSync";
+	private static final String SALESFORCE_INBOUND_FLOW_NAME = "triggerSyncFromSalesforceFlow";
+	private static final String DATABASE_INBOUND_FLOW_NAME = "triggerSyncFromDatabaseFlow";
 	private static final int TIMEOUT_MILLIS = 60;
 
-	private SubflowInterceptingChainLifecycleWrapper upsertUserInAFlow;
-	private SubflowInterceptingChainLifecycleWrapper insertUserInBFlow;
-	private InterceptingChainLifecycleWrapper queryUserFromAFlow;
-	private InterceptingChainLifecycleWrapper queryUserFromBFlow;
+	private SubflowInterceptingChainLifecycleWrapper upsertUserInSalesforceFlow;
+	private SubflowInterceptingChainLifecycleWrapper insertUserInDatabaseFlow;
+	private InterceptingChainLifecycleWrapper queryUserFromSalesforceFlow;
+	private InterceptingChainLifecycleWrapper queryUserFromDatabaseFlow;
 	private BatchTestHelper batchTestHelper;
 
-	private List<Map<String, Object>> createdUsersInA = new ArrayList<Map<String, Object>>();
-	private List<Map<String, Object>> createdUsersInB = new ArrayList<Map<String, Object>>();
+	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
+	private List<Map<String, Object>> createdUsersInDatabase = new ArrayList<Map<String, Object>>();
 
 	@BeforeClass
 	public static void beforeTestClass() {
@@ -77,109 +83,109 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	}
 
 	private void stopAutomaticPollTriggering() throws MuleException {
-		stopFlowSchedulers(A_INBOUND_FLOW_NAME);
-		stopFlowSchedulers(B_INBOUND_FLOW_NAME);
+		stopFlowSchedulers(SALESFORCE_INBOUND_FLOW_NAME);
+		stopFlowSchedulers(DATABASE_INBOUND_FLOW_NAME);
 	}
 
 	private void getAndInitializeFlows() throws InitialisationException {
-		// Flow for updating a user in A instance
-		upsertUserInAFlow = getSubFlow("upsertUserInAFlow");
-		upsertUserInAFlow.initialise();
+		// Flow for updating a user in Salesforce
+		upsertUserInSalesforceFlow = getSubFlow("upsertUserInSalesforceFlow");
+		upsertUserInSalesforceFlow.initialise();
 
-		// Flow for updating a user in B instance
-		insertUserInBFlow = getSubFlow("insertUserInBFlow");
-		insertUserInBFlow.initialise();
+		// Flow for updating a user in Database
+		insertUserInDatabaseFlow = getSubFlow("insertUserInDatabaseFlow");
+		insertUserInDatabaseFlow.initialise();
 
-		// Flow for querying the user in A instance
-		queryUserFromAFlow = getSubFlow("queryUserFromAFlow");
-		queryUserFromAFlow.initialise();
+		// Flow for querying the user in Salesforce
+		queryUserFromSalesforceFlow = getSubFlow("queryUserFromSalesforceFlow");
+		queryUserFromSalesforceFlow.initialise();
 
-		// Flow for querying the user in B instance
-		queryUserFromBFlow = getSubFlow("queryUserFromBFlow");
-		queryUserFromBFlow.initialise();
+		// Flow for querying the user in Database
+		queryUserFromDatabaseFlow = getSubFlow("queryUserFromDatabaseFlow");
+		queryUserFromDatabaseFlow.initialise();
 	}
 
 	@Test
-	public void whenUpdatingAnUserInInstanceBTheBelongingUserGetsUpdatedInInstanceA() throws MuleException, Exception {
+	public void whenUpdatingAnUserInDatabaseTheBelongingUserGetsUpdatedInSalesforce() throws MuleException, Exception {
 		// test db -> sfdc
 
-		Map<String, Object> user_0_B = new HashMap<String, Object>();
-		String infixB = "_0_B_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
-		user_0_B.put("Id", UUID.getUUID());
-		user_0_B.put("Username", "Name" + infixB + "@example.com");
-		user_0_B.put("FirstName", "fm" + infixB);
-		user_0_B.put("LastName", "ln" + infixB);
-		user_0_B.put("Email", "email" + infixB + "@example.com");
-		user_0_B.put("ProfileId", "00e80000001C34eAAC");
-		user_0_B.put("Alias", "alias0B");
-		user_0_B.put("TimeZoneSidKey", "GMT");
-		user_0_B.put("LocaleSidKey", "en_US");
-		user_0_B.put("EmailEncodingKey", "ISO-8859-1");
-		user_0_B.put("LanguageLocaleKey", "en_US");
-		user_0_B.put("CommunityNickname", "cn" + infixB);
-		createdUsersInB.add(user_0_B);
+		Map<String, Object> databaseUser0 = new HashMap<String, Object>();
+		String infixDatabase = "_0_DB_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
+		databaseUser0.put(VAR_ID, UUID.getUUID());
+		databaseUser0.put(VAR_USERNAME, "Name" + infixDatabase + "@example.com");
+		databaseUser0.put(VAR_FIRST_NAME, "fm" + infixDatabase);
+		databaseUser0.put(VAR_LAST_NAME, "ln" + infixDatabase);
+		databaseUser0.put(VAR_EMAIL, "email" + infixDatabase + "@example.com");
+		databaseUser0.put("ProfileId", "00e80000001C34eAAC");
+		databaseUser0.put("Alias", "al0Db");
+		databaseUser0.put("TimeZoneSidKey", "GMT");
+		databaseUser0.put("LocaleSidKey", "en_US");
+		databaseUser0.put("EmailEncodingKey", "ISO-8859-1");
+		databaseUser0.put("LanguageLocaleKey", "en_US");
+		databaseUser0.put("CommunityNickname", "cn" + infixDatabase);
+		createdUsersInDatabase.add(databaseUser0);
 		
-		insertUserInBFlow.process(getTestEvent(Collections.singletonList(user_0_B), MessageExchangePattern.REQUEST_RESPONSE));
+		insertUserInDatabaseFlow.process(getTestEvent(Collections.singletonList(databaseUser0), MessageExchangePattern.REQUEST_RESPONSE));
 	
 		Thread.sleep(1001);
 		
 		// Execution
-		executeWaitAndAssertBatchJob(B_INBOUND_FLOW_NAME);
+		executeWaitAndAssertBatchJob(DATABASE_INBOUND_FLOW_NAME);
 
 		// Assertions
 		{
-			Object object =  queryUser(user_0_B, queryUserFromBFlow);
+			Object object =  queryUser(databaseUser0, queryUserFromDatabaseFlow);
 			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
 			Map<String, Object> payload = (Map<String, Object>) object;
-			Assert.assertEquals("The user should have been sync and new name must match", user_0_B.get("FirstName"), payload.get("FirstName"));
-			Assert.assertEquals("The user should have been sync and new title must match", user_0_B.get("LastName"), payload.get("LastName"));
+			Assert.assertEquals("The user should have been sync and new name must match", databaseUser0.get(VAR_FIRST_NAME), payload.get(VAR_FIRST_NAME));
+			Assert.assertEquals("The user should have been sync and new title must match", databaseUser0.get(VAR_LAST_NAME), payload.get(VAR_LAST_NAME));
 		}
 
 		// cleanup
-		deleteTestUsersFromSandBoxA(createdUsersInB); // will fail because user can't be deleted from SFDC
-		deleteTestUsersFromSandBoxB(createdUsersInB);
+		deleteTestUsersFromSalesforce(); // will fail because user can't be deleted from SFDC
+		deleteTestUsersFromDatabase();
 
 		// test sfdc -> db
 		
-		Map<String, Object> user_0_A = new HashMap<String, Object>();
-		String infixA = "_0_A_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
-		user_0_A.put("Username", "Name" + infixA + "@example.com");
-		user_0_A.put("FirstName", "fn" + infixA);
-		user_0_A.put("LastName", "ln" + infixA);
-		user_0_A.put("Email", "email" + infixA + "@example.com");
-		user_0_A.put("ProfileId", "00e80000001C34eAAC");
-		user_0_A.put("Alias", "alias0A");
-		user_0_A.put("TimeZoneSidKey", "GMT");
-		user_0_A.put("LocaleSidKey", "en_US");
-		user_0_A.put("EmailEncodingKey", "ISO-8859-1");
-		user_0_A.put("LanguageLocaleKey", "en_US");
-		user_0_A.put("CommunityNickname", "cn" + infixA);
-		createdUsersInA.add(user_0_A);
+		Map<String, Object> salesforceUser0 = new HashMap<String, Object>();
+		String infixSalesforce = "_0_SFDC_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
+		salesforceUser0.put(VAR_USERNAME, "Name" + infixSalesforce + "@example.com");
+		salesforceUser0.put(VAR_FIRST_NAME, "fn" + infixSalesforce);
+		salesforceUser0.put(VAR_LAST_NAME, "ln" + infixSalesforce);
+		salesforceUser0.put(VAR_EMAIL, "email" + infixSalesforce + "@example.com");
+		salesforceUser0.put("ProfileId", "00e80000001C34eAAC");
+		salesforceUser0.put("Alias", "al0Sfdc");
+		salesforceUser0.put("TimeZoneSidKey", "GMT");
+		salesforceUser0.put("LocaleSidKey", "en_US");
+		salesforceUser0.put("EmailEncodingKey", "ISO-8859-1");
+		salesforceUser0.put("LanguageLocaleKey", "en_US");
+		salesforceUser0.put("CommunityNickname", "cn" + infixSalesforce);
+		createdUsersInSalesforce.add(salesforceUser0);
 
-		MuleEvent event = upsertUserInAFlow.process(getTestEvent(Collections.singletonList(user_0_A), MessageExchangePattern.REQUEST_RESPONSE));
-		user_0_A.put("Id", (((UpsertResult) ((List<?>) event.getMessage().getPayload()).get(0))).getId());
+		MuleEvent event = upsertUserInSalesforceFlow.process(getTestEvent(Collections.singletonList(salesforceUser0), MessageExchangePattern.REQUEST_RESPONSE));
+		salesforceUser0.put(VAR_ID, (((UpsertResult) ((List<?>) event.getMessage().getPayload()).get(0))).getId());
 
 		Thread.sleep(1001);
 
 		// Execution
-		executeWaitAndAssertBatchJob(A_INBOUND_FLOW_NAME);
+		executeWaitAndAssertBatchJob(SALESFORCE_INBOUND_FLOW_NAME);
 
 		// FIXME above call does not wait for batch to complete
 		Thread.sleep(10000);
 		
 		// Assertions
 		{
-			Object object = queryUser(user_0_A, queryUserFromBFlow);
+			Object object = queryUser(salesforceUser0, queryUserFromDatabaseFlow);
 			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
 			Map<String, Object> payload = (Map<String, Object>) object;
-			Assert.assertEquals("The user should have been sync and new name must match", user_0_A.get("FirstName"), payload.get("FirstName"));
-			Assert.assertEquals("The user should have been sync and new title must match", user_0_A.get("LastName"), payload.get("LastName"));
+			Assert.assertEquals("The user should have been sync and new name must match", salesforceUser0.get(VAR_FIRST_NAME), payload.get(VAR_FIRST_NAME));
+			Assert.assertEquals("The user should have been sync and new title must match", salesforceUser0.get(VAR_LAST_NAME), payload.get(VAR_LAST_NAME));
 		}
 		
 		// cleanup
-		SubflowInterceptingChainLifecycleWrapper deleteUsersAfterSfdc2Db = getSubFlow("deleteUsersAfterSfdc2Db");
-		deleteUsersAfterSfdc2Db.initialise();
-		deleteUsersAfterSfdc2Db.process(getTestEvent(createdUsersInA, MessageExchangePattern.REQUEST_RESPONSE));
+		SubflowInterceptingChainLifecycleWrapper deleteUsersAfterSfdc2Database = getSubFlow("deleteUsersAfterSfdc2Database");
+		deleteUsersAfterSfdc2Database.initialise();
+		deleteUsersAfterSfdc2Database.process(getTestEvent(createdUsersInSalesforce, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 
 	private Object queryUser(Map<String, Object> user, InterceptingChainLifecycleWrapper queryUserFlow) throws MuleException, Exception {
@@ -195,29 +201,29 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		batchTestHelper.assertJobWasSuccessful();
 	}
 	
-	private void deleteTestUsersFromSandBoxB(List<Map<String, Object>> createdUsersInA) throws InitialisationException, MuleException, Exception {
-		SubflowInterceptingChainLifecycleWrapper deleteUserFromBFlow = getSubFlow("deleteUserFromBFlow");
-		deleteUserFromBFlow.initialise();
-		deleteTestEntityFromSandBox(deleteUserFromBFlow, createdUsersInA);
+	private void deleteTestUsersFromDatabase() throws InitialisationException, MuleException, Exception {
+		SubflowInterceptingChainLifecycleWrapper deleteUserFromDatabaseFlow = getSubFlow("deleteUserFromDatabaseFlow");
+		deleteUserFromDatabaseFlow.initialise();
+		deleteTestEntityFromSandBox(deleteUserFromDatabaseFlow, createdUsersInDatabase);
 	}
 
-	private void deleteTestUsersFromSandBoxA(List<Map<String, Object>> createdUsersInB) throws InitialisationException, MuleException, Exception {
-		List<Map<String, Object>> createdUsersInA = new ArrayList<Map<String, Object>>();
-		for (Map<String, Object> c : createdUsersInB) {
-			Map<String, Object> user = invokeRetrieveFlow(queryUserFromAFlow, c);
+	private void deleteTestUsersFromSalesforce() throws InitialisationException, MuleException, Exception {
+		List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
+		for (Map<String, Object> c : createdUsersInDatabase) {
+			Map<String, Object> user = invokeRetrieveFlow(queryUserFromSalesforceFlow, c);
 			if (user != null) {
-				createdUsersInA.add(user);
+				createdUsersInSalesforce.add(user);
 			}
 		}
-		SubflowInterceptingChainLifecycleWrapper deleteUserFromAFlow = getSubFlow("deleteUserFromAFlow");
-		deleteUserFromAFlow.initialise();
-		deleteTestEntityFromSandBox(deleteUserFromAFlow, createdUsersInA);
+		SubflowInterceptingChainLifecycleWrapper deleteUserFromSalesforceFlow = getSubFlow("deleteUserFromSalesforceFlow");
+		deleteUserFromSalesforceFlow.initialise();
+		deleteTestEntityFromSandBox(deleteUserFromSalesforceFlow, createdUsersInSalesforce);
 	}
 	
 	private void deleteTestEntityFromSandBox(SubflowInterceptingChainLifecycleWrapper deleteFlow, List<Map<String, Object>> entitities) throws MuleException, Exception {
 		List<String> idList = new ArrayList<String>();
 		for (Map<String, Object> c : entitities) {
-			idList.add(c.get("Id").toString());
+			idList.add(c.get(VAR_ID).toString());
 		}
 		
 		deleteFlow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
