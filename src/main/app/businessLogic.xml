@@ -21,13 +21,13 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
             
-            <batch:step name="getUserInBStep" accept-expression="#['A'.equals(flowVars['sourceSystem'])]">
+            <batch:step name="getUserInDatabaseStep" accept-expression="#['SFDC'.equals(flowVars['sourceSystem'])]">
                 <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 f.setTimeZone(TimeZone.getTimeZone("UTC"));
 payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
 ]]></expression-component>
                 <enricher source="#[payload.isEmpty() ? NullPayload.getInstance() : payload[0]]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
-                    <db:select config-ref="Database" doc:name="query user from B">
+                    <db:select config-ref="Database" doc:name="query user from Database">
                         <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
 
                     </db:select>
@@ -40,8 +40,8 @@ if (profilesMap) {
 ]]></expression-component>
             </batch:step>
 
-            <batch:step name="updateUsersInBStep" accept-expression="#['A'.equals(flowVars['sourceSystem']) &amp;&amp; !(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById')]">
-                <data-mapper:transform config-ref="User_To_User" doc:name="map Salesforce User To db User"/>
+            <batch:step name="updateUsersInDatabaseStep" accept-expression="#['SFDC'.equals(flowVars['sourceSystem']) &amp;&amp; !(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById')]">
+                <data-mapper:transform config-ref="User_To_User" doc:name="map Salesforce User To Database User"/>
                 <expression-component doc:name="prepare user for update"><![CDATA[payload.put('Id', recordVars['userInTargetInstance'].get('Id'));
 ]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
@@ -80,7 +80,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     <logger message="Update Database B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>
-            <batch:step name="insertUsersToBStep" accept-expression="#['A'.equals(flowVars['sourceSystem']) &amp;&amp; recordVars['userInTargetInstance'] is NullPayload]">
+            <batch:step name="insertUsersToDatabaseStep" accept-expression="#['SFDC'.equals(flowVars['sourceSystem']) &amp;&amp; recordVars['userInTargetInstance'] is NullPayload]">
                 <data-mapper:transform config-ref="User_To_User_1" doc:name="map Salesforce User To db User"/>
                 <batch:commit size="200" doc:name="Batch Commit">
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
@@ -146,10 +146,10 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>            
-            <batch:step name="getUserInAStep" accept-expression="#['B'.equals(flowVars['sourceSystem'])]">
+            <batch:step name="getUserInSalesforceStep" accept-expression="#['DB'.equals(flowVars['sourceSystem'])]">
                 <enricher source="#[payload]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
                     <processor-chain doc:name="Processor Chain">
-                        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from A"/>
+                        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
                         <expression-component doc:name="Expression"><![CDATA[if (!(payload is NullPayload)) {
 	f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	f.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -159,7 +159,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                 </enricher>
             </batch:step>
             
-            <batch:step name="upsertUserInAStep" accept-expression="#['B'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['userInTargetInstance'] is NullPayload || (recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')))]">
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="#['DB'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['userInTargetInstance'] is NullPayload || (recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')))]">
                 <data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map db User To Salesforce User"/>
 				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
 payload.remove('LastModifiedDate');
@@ -177,7 +177,7 @@ if (profilesMap) {
 }
 ]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
-			        <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in A">
+			        <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user to Salesforce">
 			            <sfdc:objects ref="#[payload]"/>
 			        </sfdc:upsert>
 			        <logger message="Upsert Salesforce A response: #[payload]" level="INFO" doc:name="log response"/>

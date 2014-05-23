@@ -20,6 +20,6 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 		<sfdc:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW" />
 	</sfdc:config>
 	
-    <db:generic-config name="Database" url="${db.jdbcUrl}" driverClassName="com.mysql.jdbc.Driver" doc:name="Database instance"/>
+    <db:generic-config name="Database" url="${db.jdbcUrl}" driverClassName="com.mysql.jdbc.Driver" doc:name="Database instance" doc:description="Database instance"/>
 	
 </mule>
