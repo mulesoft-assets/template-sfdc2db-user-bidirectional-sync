@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
             
-            <batch:step name="getUserInDatabaseStep" accept-expression="#['SFDC'.equals(flowVars['sourceSystem'])]">
+            <batch:step name="getUserInDatabaseStep" accept-expression="'SFDC'.equals(flowVars['sourceSystem'])">
                 <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 f.setTimeZone(TimeZone.getTimeZone("UTC"));
 payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
@@ -32,15 +32,15 @@ payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
 
                     </db:select>
                 </enricher>
-                <expression-component doc:name="prepare user for upsert"><![CDATA[// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
-profilesMap = ${from.A.to.B.profilesMap};
+                <expression-component doc:name="prepare user for upsert"><![CDATA[// We map the profile IDs from Salesforce to Database, each profileId from the left (source) will be map to the one on the right (target)
+profilesMap = ${from.sfdc.to.db.profilesMap};
 if (profilesMap) {
 	payload.put('ProfileId', profilesMap.get(payload['ProfileId']));
 }
 ]]></expression-component>
             </batch:step>
 
-            <batch:step name="updateUsersInDatabaseStep" accept-expression="#['SFDC'.equals(flowVars['sourceSystem']) &amp;&amp; !(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById')]">
+            <batch:step name="updateUsersInDatabaseStep" accept-expression="'SFDC'.equals(flowVars['sourceSystem']) &amp;&amp; !(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById')">
                 <data-mapper:transform config-ref="User_To_User" doc:name="map Salesforce User To Database User"/>
                 <expression-component doc:name="prepare user for update"><![CDATA[payload.put('Id', recordVars['userInTargetInstance'].get('Id'));
 ]]></expression-component>
@@ -80,8 +80,8 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     <logger message="Update Database B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>
-            <batch:step name="insertUsersToDatabaseStep" accept-expression="#['SFDC'.equals(flowVars['sourceSystem']) &amp;&amp; recordVars['userInTargetInstance'] is NullPayload]">
-                <data-mapper:transform config-ref="User_To_User_1" doc:name="map Salesforce User To db User"/>
+            <batch:step name="insertUsersToDatabaseStep" accept-expression="'SFDC'.equals(flowVars['sourceSystem']) &amp;&amp; recordVars['userInTargetInstance'] is NullPayload">
+                <data-mapper:transform config-ref="User_To_User_1" doc:name="map Salesforce User To Database User"/>
                 <batch:commit size="200" doc:name="Batch Commit">
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
                         <db:parameterized-query><![CDATA[INSERT INTO User (
@@ -146,7 +146,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                     <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>            
-            <batch:step name="getUserInSalesforceStep" accept-expression="#['DB'.equals(flowVars['sourceSystem'])]">
+            <batch:step name="getUserInSalesforceStep" accept-expression="'DB'.equals(flowVars['sourceSystem'])">
                 <enricher source="#[payload]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
                     <processor-chain doc:name="Processor Chain">
                         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
@@ -159,8 +159,8 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                 </enricher>
             </batch:step>
             
-            <batch:step name="upsertUserInSalesforceStep" accept-expression="#['DB'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['userInTargetInstance'] is NullPayload || (recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')))]">
-                <data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map db User To Salesforce User"/>
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="'DB'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['userInTargetInstance'] is NullPayload || (recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')))">
+                <data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map Database User To Salesforce User"/>
 				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
 payload.remove('LastModifiedDate');
 payload.remove('LastModifiedById');
@@ -170,8 +170,8 @@ if(!(recordVars['userInTargetInstance'] is NullPayload)) {
 	payload.remove('Username');
 }
 
-// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
-profilesMap = ${from.B.to.A.profilesMap};
+// We map the profile IDs from Database to Salesforce, each profileId from the left (source) will be map to the one on the right (target)
+profilesMap = ${from.db.to.sfdc.profilesMap};
 if (profilesMap) {
 	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
 }

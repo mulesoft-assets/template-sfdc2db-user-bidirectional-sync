@@ -21,7 +21,7 @@ Please review the terms of the license before downloading and using this templat
 
 ## Use case <a name="usecase"/>
 
-As a Salesforce admin, I want to have my users synchronized between Salesforce and Database organizations
+I want to have my users synchronized between Salesforce and Database organizations
 
 ## Template overview <a name="templateoverview"/>
 
@@ -35,7 +35,7 @@ Let's say we want to keep Salesforce synchronized with Database. Then, the integ
 
 3. If Database answer for the previous question (2.) is *Yes*, then *upsert* (create or update depending each particular case) Database with the belonging change
 
-4. Repeat previous steps (1. to 3.) the other way around (using Database as source instance and Salesforce as the target one)
+4. Repeat previous steps (1. to 3.) the other way around (using Database as source and Salesforce as the target)
 
  Repeat *ad infinitum*:
 
@@ -95,13 +95,10 @@ This property is an important one, as it configures what should be the start poi
 + db.jdbcUrl `jdbc:mysql://localhost:3306/mule?user=mule&password=mule`
 + db.integration.user.id `mule@localhost`
 
-+ from.A.to.B.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
-+ from.B.to.A.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
++ from.sfdc.to.db.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
++ from.db.to.sfdc.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 The meaning of the properties above is defined in the second consideration on [the previous section](#afewconsiderations)
  
-
-
-
 ## Running on CloudHub <a name="runoncloudhub"/>
 
 Running the template on CloudHub is as simple as follow the 4 steps detailed on the following documetation page: 
@@ -131,7 +128,7 @@ This file holds the configuration for Connectors and [Properties Place Holders][
 Although you can update the configuration properties here, we highly recommend to keep them parameterized and modified them in the belonging property files.
 
 For this particular template, what you will find in the config file is
-* the configuration for the two Salesforce and Database instances that are being synced
+* the configuration for the Salesforce and Database instances that are being synced
 * the property place holder configuration
 
 In order to find the mentioned configuration, you should check out the [*Global Element* tab][7].
@@ -139,10 +136,10 @@ In order to find the mentioned configuration, you should check out the [*Global 
 
 ## endpoints.xml<a name="endpointsxml"/> 
 This file should contain every inbound and outbound endpoint of your integration app. It is intended to contain the application API.
-In this particular template, this file contains a couple of poll inbound endpoints that query salesforce and database for updates using watermark as mentioned before.
+In this particular template, this file contains a couple of poll inbound endpoints that query Salesforce and database for updates using watermark as mentioned before.
 
 ## businessLogic.xml<a name="businesslogicxml"/>
-This file holds the functional aspect of the template (points 2. to 4. described in the [template overview](#templateoverview)). Its main component is a [*Batch job*][8], and it includes *steps* for both executing the synchronization from Salesforce instance A to Database instance B, and the other way around.
+This file holds the functional aspect of the template (points 2. to 4. described in the [template overview](#templateoverview)). Its main component is a [*Batch job*][8], and it includes *steps* for both executing the synchronization from Salesforce to Database, and the other way around.
 
 
 ## errorHandling.xml<a name="errorhandlingxml"/>
