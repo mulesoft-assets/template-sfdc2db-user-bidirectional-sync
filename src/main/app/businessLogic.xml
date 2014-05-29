@@ -32,7 +32,7 @@ payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
 
                     </db:select>
                 </enricher>
-                <expression-component doc:name="prepare user for upsert"><![CDATA[// We map the profile IDs from Salesforce to Database, each profileId from the left (source) will be map to the one on the right (target)
+                <expression-component doc:name="map ProfileId"><![CDATA[// We map the profile IDs from Salesforce to Database, each profileId from the left (source) will be map to the one on the right (target)
 profilesMap = ${from.sfdc.to.db.profilesMap};
 if (profilesMap) {
 	payload.put('ProfileId', profilesMap.get(payload['ProfileId']));
@@ -150,7 +150,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                 <enricher source="#[payload]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
                     <processor-chain doc:name="Processor Chain">
                         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
-                        <expression-component doc:name="Expression"><![CDATA[if (!(payload is NullPayload)) {
+                        <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[if (!(payload is NullPayload)) {
 	f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	f.setTimeZone(TimeZone.getTimeZone("UTC"));
 	payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);
@@ -161,8 +161,7 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
             
             <batch:step name="upsertUserInSalesforceStep" accept-expression="'DB'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['userInTargetInstance'] is NullPayload || (recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')))">
                 <data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map Database User To Salesforce User"/>
-				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedById');
-payload.remove('LastModifiedDate');
+				<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedDate');
 payload.remove('LastModifiedById');
 
 if(!(recordVars['userInTargetInstance'] is NullPayload)) {
