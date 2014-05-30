@@ -19,8 +19,8 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
     <flow name="triggerSyncFromSalesforceFlow" doc:name="triggerSyncFromSalesforceFlow" processingStrategy="synchronous" initialState="started">
 		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
-			<watermark variable="salesforceLastQueryDate" default-expression="${watermark.default.expression}" selector="MIN" selector-expression="#[payload.LastModifiedDate]" />
-            <sfdc:query config-ref="Salesforce" query="SELECT AboutMe,Alias,City,CompanyName,Country,CommunityNickname,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate &gt; #[flowVars['salesforceLastQueryDate']] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
+			<watermark variable="salesforceLastQueryDate" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
+            <sfdc:query config-ref="Salesforce" query="SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username FROM User WHERE LastModifiedDate &gt; #[flowVars['salesforceLastQueryDate']] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
 		</poll>
         <set-variable variableName="sourceSystem" value="SFDC" doc:name="set Salesforce as source system" />
         <batch:execute name="syncBatch" doc:name="trigger batch execution"/>
@@ -31,7 +31,8 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
 			<watermark variable="databaseLastQueryDate" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <db:select config-ref="Database" doc:name="fetch users from Database">
-                <db:parameterized-query><![CDATA[SELECT AboutMe,Alias,City,CompanyName,CommunityNickname,Country,Department,Division,Email,EmailEncodingKey,Fax,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,MobilePhone,Phone,PostalCode,ProfileId,State,Street,TimeZoneSidKey,Title,Username FROM User WHERE LastModifiedDate > #[flowVars['databaseLastQueryDate']] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
+                <db:parameterized-query><![CDATA[SELECT Alias, CommunityNickname, Email,EmailEncodingKey, FirstName,LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Title, Username FROM User WHERE LastModifiedDate > #[flowVars['databaseLastQueryDate']] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
+
             </db:select>
 		</poll>
         <set-variable variableName="sourceSystem" value="DB" doc:name="set Database as source system" />
