@@ -2,6 +2,7 @@ package org.mule.templates.integration;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import org.mule.api.lifecycle.InitialisationException;
 import org.mule.processor.chain.InterceptingChainLifecycleWrapper;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.templates.AbstractTemplatesTestCase;
+import org.mule.templates.db.MySQLDbCreator;
 import org.mule.transport.NullPayload;
 import org.mule.util.UUID;
 
@@ -52,6 +54,11 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	private InterceptingChainLifecycleWrapper queryUserFromSalesforceFlow;
 	private InterceptingChainLifecycleWrapper queryUserFromDatabaseFlow;
 	private BatchTestHelper batchTestHelper;
+	
+	private static final String PATH_TO_TEST_PROPERTIES = "./src/test/resources/mule.test.properties";
+	private static final String PATH_TO_SQL_SCRIPT = "src/main/resources/sfdc2jdbc.sql";
+	private static final String DATABASE_NAME = "SFDC2DBAccountBroadcast" + new Long(new Date().getTime()).toString();
+	private static final MySQLDbCreator DBCREATOR = new MySQLDbCreator(DATABASE_NAME, PATH_TO_SQL_SCRIPT, PATH_TO_TEST_PROPERTIES);
 
 	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
 	private List<Map<String, Object>> createdUsersInDatabase = new ArrayList<Map<String, Object>>();
@@ -68,6 +75,9 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		DateTime now = new DateTime(DateTimeZone.UTC);
 		DateTimeFormatter dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		System.setProperty("watermark.default.expression", now.toString(dateFormat));
+		
+		System.setProperty("db.jdbcUrl", DBCREATOR.getDatabaseUrlWithName());
+		DBCREATOR.setUpDatabase();
 	}
 
 	@Before
@@ -80,6 +90,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	@After
 	public void tearDown() throws Exception {
+		DBCREATOR.tearDownDataBase();
 	}
 
 	private void stopAutomaticPollTriggering() throws MuleException {
