@@ -13,6 +13,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	<choice-exception-strategy name="defaultChoiceExceptionStrategy">
         <catch-exception-strategy when="#[exception.causedBy(java.lang.Exception)]" doc:name="Catch Exception Strategy">
             <logger level="INFO" doc:name="Logger"/>
+            <expression-component doc:name="Expression"><![CDATA[app.registry['PollSynchronizer'].unlock()]]></expression-component>
         </catch-exception-strategy>
     </choice-exception-strategy>
     
