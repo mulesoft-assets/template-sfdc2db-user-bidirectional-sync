@@ -1,29 +1,32 @@
-# Anypoint Template: Salesforce to Database bi-directional user sync
+
+# Anypoint Template: Salesforce to Database User Bidirectional Sync
 
 + [License Agreement](#licenseagreement)
-+ [Use case](#usecase)
-+ [Template overview](#templateoverview)
++ [Use Case](#usecase)
++ [Considerations](#considerations)
 + [Run it!](#runit)
-    * [A few Considerations](#afewconsiderations)
-    * [Properties to be configured](#propertiestobeconfigured)
-    * [Running on CloudHub](#runoncloudhub)
-    * [Running on premise](#runonopremise)
+	* [Running on premise](#runonopremise)
+	* [Running on Studio](#runonstudio)
+	* [Running on Mule ESB stand alone](#runonmuleesbstandalone)
+	* [Running on CloudHub](#runoncloudhub)
+	* [Deploying your Anypoint Template on CloudHub](#deployingyouranypointtemplateoncloudhub)
+	* [Properties to be configured (With examples)](#propertiestobeconfigured)
++ [API Calls](#apicalls)
 + [Customize It!](#customizeit)
-    * [config.xml](#configxml)
-    * [endpoints.xml](#endpointsxml)
-    * [businessLogic.xml](#businesslogicxml)
-    * [errorHandling.xml](#errorhandlingxml)
+	* [config.xml](#configxml)
+	* [businessLogic.xml](#businesslogicxml)
+	* [endpoints.xml](#endpointsxml)
+	* [errorHandling.xml](#errorhandlingxml)
 
 
 # License Agreement <a name="licenseagreement"/>
 Note that using this template is subject to the conditions of this [License Agreement](AnypointTemplateLicense.pdf).
 Please review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule ESB Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
 
-## Use case <a name="usecase"/>
-
+# Use Case <a name="usecase"/>
 I want to have my users synchronized between Salesforce and Database organizations
 
-## Template overview <a name="templateoverview"/>
+## Template overview 
 
 Let's say we want to keep Salesforce synchronized with Database. Then, the integration behavior can be summarized just with the following steps:
 
@@ -44,17 +47,10 @@ Let's say we want to keep Salesforce synchronized with Database. Then, the integ
 
 And so on...
   
-  
 The question for recent changes since a certain moment is nothing but a [poll inbound][1] with a [watermark][2] defined.
 
+# Considerations <a name="considerations"/>
 
-# Run it! <a name="runit"/>
-
-In order to have the template up and running just complete the two following steps:
-
- 1. Read [a few considerations](#afewconsiderations)
- 2. [Configure the application properties](#propertiestobeconfigured)
- 3. Run it! ([on premise](#runonopremise) or [in Cloudhub](#runoncloudhub))
 
 **Note:** This particular Anypoint Template illustrate the synchronization use case between SalesForce and a Database, thus it requires a DB instance to work.
 The Anypoint Template comes packaged with a SQL script to create the DB table that uses. 
@@ -68,15 +64,61 @@ This template is customized for MySQL. To use it with different SQL implementati
 * replace attribute `driverClassName` of `db:generic-config` element with class name of desired JDBC driver in [src/main/app/config.xml](../master/src/main/app/config.xml)
 * update JDBC URL in `mule.*.properties` file
 
-## A few Considerations <a name="afewconsiderations" />
-
 There are a couple of things you should take into account before running this kick:
 
 1. **Users cannot be deleted in SalesForce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
 2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. Check out the next section to define a map between Profile Ids (from the source account to the ones in the target account and the other way around).
 
-## Properties to be configured<a name="propertiestobeconfigured"/>
+# Run it! <a name="runit"/>
+Simple steps to get Salesforce to Database User Bidirectional Sync running.
 
+
+## Running on premise <a name="runonopremise"/>
+In this section we detail the way you have to run you Anypoint Temple on you computer.
+
+
+### Where to Download Mule Studio and Mule ESB
+First thing to know if you are a newcomer to Mule is where to get the tools.
+
++ You can download Mule Studio from this [Location](http://www.mulesoft.com/platform/mule-studio)
++ You can download Mule ESB from this [Location](http://www.mulesoft.com/platform/soa/mule-esb-open-source-esb)
+
+
+### Importing an Anypoint Template into Studio
+Mule Studio offers several ways to import a project into the workspace, for instance: 
+
++ Anypoint Studio generated Deployable Archive (.zip)
++ Anypoint Studio Project from External Location
++ Maven-based Mule Project from pom.xml
++ Mule ESB Configuration XML from External Location
+
+You can find a detailed description on how to do so in this [Documentation Page](http://www.mulesoft.org/documentation/display/current/Importing+and+Exporting+in+Studio).
+
+
+### Running on Studio <a name="runonstudio"/>
+Once you have imported you Anypoint Template into Anypoint Studio you need to follow these steps to run it:
+
++ Locate the properties file `mule.dev.properties`, in src/main/resources
++ Complete all the properties required as per the examples in the section [Properties to be configured](#propertiestobeconfigured)
++ Once that is done, right click on you Anypoint Template project folder 
++ Hover you mouse over `"Run as"`
++ Click on  `"Mule Application"`
+
+
+### Running on Mule ESB stand alone <a name="runonmuleesbstandalone"/>
+Complete all properties in one of the property files, for example in [mule.prod.properties] (../blob/master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`. 
+
+
+## Running on CloudHub <a name="runoncloudhub"/>
+While [creating your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) (Or you can do it later as a next step), you need to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**.
+
+
+### Deploying your Anypoint Template on CloudHub <a name="deployingyouranypointtemplateoncloudhub"/>
+Mule Studio provides you with really easy way to deploy your Template directly to CloudHub, for the specific steps to do so please check this [link](http://www.mulesoft.org/documentation/display/current/Deploying+Mule+Applications#DeployingMuleApplications-DeploytoCloudHub)
+
+
+## Properties to be configured (With examples) <a name="propertiestobeconfigured"/>
+In order to use this Mule Anypoint Template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 ### Application configuration
 + polling.frequency `10000`  
 This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
@@ -98,22 +140,23 @@ This property is an important one, as it configures what should be the start poi
 + from.sfdc.to.db.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 + from.db.to.sfdc.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 The meaning of the properties above is defined in the second consideration on [the previous section](#afewconsiderations)
- 
-## Running on CloudHub <a name="runoncloudhub"/>
 
-Running the template on CloudHub is as simple as follow the 4 steps detailed on the following documetation page: 
-  
-> [http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub)
+# API Calls <a name="apicalls"/>
+Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The Anypoint Template calls to the API can be calculated using the formula:
 
-## Running on premise <a name="runonopremise"/>
-Once all properties are filled in one of the template property files (for example in [mule.prod.properties][4]) the template can be run by just choosing an enviromet and follow the steps detailed in the link placed below:
+***1 + X + X / 200***
 
-> [http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub](http://www.mulesoft.org/documentation/display/current/Deploying+Mule+Applications)
+Being ***X*** the number of Users to be synchronized on each run. 
+
+The division by ***200*** is because, by default, Users are gathered in groups of 200 for each Upsert API Call in the commit step. Also consider that this calls are executed repeatedly every polling cycle.	
+
+For instance if 10 records are fetched from origin instance, then 12 api calls will be made (1 + 10 + 1).
+
 
 # Customize It!<a name="customizeit"/>
-This brief guide intends to give a high level idea of how this template is built and how you can change it according to your needs.
-As mule applications are based on XML files, the idea is describing each XML included in the template.
-Of course more files will be found such as Test Classes and [Mule Application Files][5], but to keep it simple we will focus on the XMLs.
+This brief guide intends to give a high level idea of how this Anypoint Template is built and how you can change it according to your needs.
+As mule applications are based on XML files, this page will be organized by describing all the XML that conform the Anypoint Template.
+Of course more files will be found such as Test Classes and [Mule Application Files](http://www.mulesoft.org/documentation/display/current/Application+Format), but to keep it simple we will focus on the XMLs.
 
 Here is a list of the main XML files you'll find in this application:
 
@@ -124,37 +167,24 @@ Here is a list of the main XML files you'll find in this application:
 
 
 ## config.xml<a name="configxml"/>
-This file holds the configuration for Connectors and [Properties Place Holders][6]. 
-Although you can update the configuration properties here, we highly recommend to keep them parameterized and modified them in the belonging property files.
+Configuration for Connectors and [Properties Place Holders](http://www.mulesoft.org/documentation/display/current/Configuring+Properties) are set in this file. **Even you can change the configuration here, all parameters that can be modified here are in properties file, and this is the recommended place to do it so.** Of course if you want to do core changes to the logic you will probably need to modify this file.
 
-For this particular template, what you will find in the config file is
-* the configuration for the Salesforce and Database instances that are being synced
-* the property place holder configuration
+In the visual editor they can be found on the *Global Element* tab.
 
-In order to find the mentioned configuration, you should check out the [*Global Element* tab][7].
-
-
-## endpoints.xml<a name="endpointsxml"/> 
-This file should contain every inbound and outbound endpoint of your integration app. It is intended to contain the application API.
-In this particular template, this file contains a couple of poll inbound endpoints that query Salesforce and database for updates using watermark as mentioned before.
 
 ## businessLogic.xml<a name="businesslogicxml"/>
 This file holds the functional aspect of the template (points 2. to 4. described in the [template overview](#templateoverview)). Its main component is a [*Batch job*][8], and it includes *steps* for both executing the synchronization from Salesforce to Database, and the other way around.
 
 
+
+## endpoints.xml<a name="endpointsxml"/>
+This file should contain every inbound and outbound endpoint of your integration app. It is intended to contain the application API.
+In this particular template, this file contains a couple of poll inbound endpoints that query Salesforce and database for updates using watermark as mentioned before.
+
+
+
 ## errorHandling.xml<a name="errorhandlingxml"/>
-This is the right place to handle how your integration will react depending on the different exceptions. 
-This file holds a [Choice Exception Strategy][9] that should be referenced by any flow included in the business logic.
+Contains a [Catch Exception Strategy](http://www.mulesoft.org/documentation/display/current/Catch+Exception+Strategy) that is only Logging the exception thrown (If so). As you imagine, this is the right place to handle how your integration will react depending on the different exceptions.
 
 
-  [1]: http://www.mulesoft.org/documentation/display/current/Poll+Reference
-  [2]: http://blogs.mulesoft.org/data-synchronizing-made-easy-with-mule-watermarks/
-  [3]: http://www.salesforce.com/us/developer/docs/officetoolkit/Content/sforce_api_calls_soql_select_dateformats.htm
-  [4]: https://github.com/mulesoft/template-sfdc2sfdc-user-bidirectional-sync/blob/master/src/main/resources/mule.prod.properties
-  [5]: http://www.mulesoft.org/documentation/display/current/Application+Format
-  [6]: http://www.mulesoft.org/documentation/display/current/Configuring+Properties
-  [7]: http://www.mulesoft.org/documentation/display/current/Global+Elements
-  [8]: http://www.mulesoft.org/documentation/display/current/Batch+Processing
-  [9]: http://www.mulesoft.org/documentation/display/current/Choice+Exception+Strategy
-  
-  
+
