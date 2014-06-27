@@ -19,7 +19,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
     <flow name="triggerSyncFromSalesforceFlow" doc:name="triggerSyncFromSalesforceFlow" processingStrategy="synchronous" initialState="started">
 		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
-			<watermark variable="salesforceLastQueryDate" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
+			<watermark variable="salesforceLastQueryDate" default-expression="${sfdc.watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
 				<expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
                 <sfdc:query config-ref="Salesforce" query="SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username,CommunityNickname FROM User WHERE LastModifiedDate &gt; #[flowVars['salesforceLastQueryDate']] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
@@ -33,7 +33,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 	<flow name="triggerSyncFromDatabaseFlow" doc:name="triggerSyncFromDatabaseFlow" processingStrategy="synchronous" initialState="started">
    		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
-			<watermark variable="databaseLastQueryDate" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
+			<watermark variable="databaseLastQueryDate" default-expression="${db.watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
                 <db:select config-ref="Database" doc:name="fetch users from Database">
