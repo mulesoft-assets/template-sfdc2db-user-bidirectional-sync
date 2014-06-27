@@ -22,10 +22,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
         <batch:process-records>
 
             <batch:step name="getUserInDatabaseStep" >
-                <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
- f.setTimeZone(TimeZone.getTimeZone("UTC")); 
- payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']); 
- ]]></expression-component> 
+ 
                 <enricher source="#[payload.isEmpty() ? NullPayload.getInstance() : payload[0]]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
                     <db:select config-ref="Database" doc:name="query user from Database">
                         <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
@@ -41,7 +38,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
  ]]></expression-component> 
             </batch:step>
             
-            <batch:step name="updateUsersInDatabaseStep" accept-expression="!(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; recordVars['userInTargetInstance']['LastModifiedDate'] &lt; payload['LastModifiedDate'] &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById')">
+            <batch:step name="updateUsersInDatabaseStep" accept-expression="(!(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload['LastModifiedDate']).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(recordVars['userInTargetInstance']['LastModifiedDate'])) &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById'))">
                 <data-mapper:transform config-ref="User_To_User" doc:name="map Salesforce User To Database User"/>
                 <expression-component doc:name="prepare user for update"><![CDATA[payload.put('Id', recordVars['userInTargetInstance'].get('Id'));
   ]]></expression-component> 
@@ -94,17 +91,10 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
         <batch:process-records>
             <batch:step name="getUserInSalesforceStep">
                 <enricher doc:name="Message Enricher" source="#[payload]" target="#[recordVars['userInTargetInstance']]">
-                    <processor-chain doc:name="Processor Chain">
-                        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
-                        <expression-component doc:name="convert LastModifiedDate to Date"><![CDATA[if (!(payload is NullPayload)) { 
-  	f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");  
-  	f.setTimeZone(TimeZone.getTimeZone("UTC"));  
-  	payload['LastModifiedDate'] = f.parse(payload['LastModifiedDate']);  
-  }]]></expression-component> 
-                    </processor-chain>
+                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
                 </enricher>
             </batch:step>
-            <batch:step name="Batch_Step">
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="recordVars['userInTargetInstance'] is NullPayload ? true : org.mule.templates.date.DateUtils.dateToDateTime(payload['LastModifiedDate']).isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(recordVars['userInTargetInstance']['LastModifiedDate'])) &amp;&amp; '${database.integration.user.id}' != payload.get('LastModifiedById')">
             	<data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map Database User To Salesforce User"/>
             	<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedDate'); 
   payload.remove('LastModifiedById');  
