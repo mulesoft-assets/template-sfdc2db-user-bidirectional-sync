@@ -68,3 +68,7 @@ src/main/resources/mule.test.properties
 **.DS_Store
 
 
+
+pom.xml.releaseBackup
+
+release.properties
