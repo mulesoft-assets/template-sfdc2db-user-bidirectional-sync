@@ -64,8 +64,6 @@ WHERE Id = #[payload['Id']]]]></db:parameterized-query>
                 <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
                     </db:select>
                     </enricher>
-
-<!--         <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey FROM User WHERE Email = '#[payload['Email']]'" doc:name="Query user in B"/> -->
         <logger level="INFO" message="Query user from B result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     <sub-flow name="insertUserInDatabaseFlow" doc:name="insertUserInDatabaseFlow">

@@ -6,12 +6,16 @@
 
 package org.mule.templates.integration;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -49,6 +53,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	private static final String VAR_LAST_NAME = "LastName";
 	private static final String VAR_FIRST_NAME = "FirstName";
 	private static final String VAR_EMAIL = "Email";
+	private static String SFDC_PROFILE_ID;
 	
 	private static final String ANYPOINT_TEMPLATE_NAME = "userBiSync";
 	private static final String SALESFORCE_INBOUND_FLOW_NAME = "triggerSyncFromSalesforceFlow";
@@ -71,6 +76,20 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	@BeforeClass
 	public static void beforeTestClass() {
+		
+		final Properties props = new Properties();
+		try {
+			props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+		SFDC_PROFILE_ID = props.getProperty("sfdc.user.profile.id");
+		
 		System.setProperty("page.size", "1000");
 
 		// Set polling frequency to 10 seconds
@@ -88,6 +107,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	@Before
 	public void setUp() throws MuleException {
+		
 		stopAutomaticPollTriggering();
 		getAndInitializeFlows();
 
@@ -133,7 +153,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		databaseUser0.put(VAR_FIRST_NAME, "fm" + infixDatabase);
 		databaseUser0.put(VAR_LAST_NAME, "ln" + infixDatabase);
 		databaseUser0.put(VAR_EMAIL, "email" + infixDatabase + "@example.com");
-		databaseUser0.put("ProfileId", "00e80000001C34eAAC");
+		databaseUser0.put("ProfileId", SFDC_PROFILE_ID);
 		databaseUser0.put("Alias", "al0Db");
 		databaseUser0.put("TimeZoneSidKey", "GMT");
 		databaseUser0.put("LocaleSidKey", "en_US");
@@ -170,7 +190,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		salesforceUser0.put(VAR_FIRST_NAME, "fn" + infixSalesforce);
 		salesforceUser0.put(VAR_LAST_NAME, "ln" + infixSalesforce);
 		salesforceUser0.put(VAR_EMAIL, "email" + infixSalesforce + "@example.com");
-		salesforceUser0.put("ProfileId", "00e80000001C34eAAC");
+		salesforceUser0.put("ProfileId", SFDC_PROFILE_ID);
 		salesforceUser0.put("Alias", "al0Sfdc");
 		salesforceUser0.put("TimeZoneSidKey", "GMT");
 		salesforceUser0.put("LocaleSidKey", "en_US");
