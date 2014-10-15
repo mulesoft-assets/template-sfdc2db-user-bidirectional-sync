@@ -110,7 +110,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
   	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));  
   }  
   ]]></expression-component>
-  				<batch:commit size="200" doc:name="Batch Commit">
+                <batch:commit size="200" doc:name="Batch Commit">
                      <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in Salesforce"> 
                          <sfdc:objects ref="#[payload]"/> 
                      </sfdc:upsert> 

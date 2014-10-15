@@ -70,6 +70,8 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	private static final String PATH_TO_SQL_SCRIPT = "src/main/resources/sfdc2jdbc.sql";
 	private static final String DATABASE_NAME = "SFDC2DBAccountBroadcast" + new Long(new Date().getTime()).toString();
 	private static final MySQLDbCreator DBCREATOR = new MySQLDbCreator(DATABASE_NAME, PATH_TO_SQL_SCRIPT, PATH_TO_TEST_PROPERTIES);
+	private static final Object EMAIL = "noreply@chatter.salesforce.com";
+	private static String SFDC_ID = null;
 
 	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
 	private List<Map<String, Object>> createdUsersInDatabase = new ArrayList<Map<String, Object>>();
@@ -81,15 +83,13 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		try {
 			props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	
 		SFDC_PROFILE_ID = props.getProperty("sfdc.user.profile.id");
-		
+		SFDC_ID = props.getProperty("sfdc.testuser.id");
 		System.setProperty("page.size", "1000");
 
 		// Set polling frequency to 10 seconds
@@ -152,7 +152,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		databaseUser0.put(VAR_USERNAME, "Name" + infixDatabase + "@example.com");
 		databaseUser0.put(VAR_FIRST_NAME, "fm" + infixDatabase);
 		databaseUser0.put(VAR_LAST_NAME, "ln" + infixDatabase);
-		databaseUser0.put(VAR_EMAIL, "email" + infixDatabase + "@example.com");
+		databaseUser0.put(VAR_EMAIL, EMAIL);
 		databaseUser0.put("ProfileId", SFDC_PROFILE_ID);
 		databaseUser0.put("Alias", "al0Db");
 		databaseUser0.put("TimeZoneSidKey", "GMT");
@@ -179,17 +179,17 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		}
 
 		// cleanup
-		deleteTestUsersFromSalesforce(); // will fail because user can't be deleted from SFDC
 		deleteTestUsersFromDatabase();
 
 		// test sfdc -> db
 		
 		Map<String, Object> salesforceUser0 = new HashMap<String, Object>();
 		String infixSalesforce = "_0_SFDC_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
+		salesforceUser0.put(VAR_ID, SFDC_ID);
 		salesforceUser0.put(VAR_USERNAME, "Name" + infixSalesforce + "@example.com");
 		salesforceUser0.put(VAR_FIRST_NAME, "fn" + infixSalesforce);
 		salesforceUser0.put(VAR_LAST_NAME, "ln" + infixSalesforce);
-		salesforceUser0.put(VAR_EMAIL, "email" + infixSalesforce + "@example.com");
+		salesforceUser0.put(VAR_EMAIL, EMAIL);
 		salesforceUser0.put("ProfileId", SFDC_PROFILE_ID);
 		salesforceUser0.put("Alias", "al0Sfdc");
 		salesforceUser0.put("TimeZoneSidKey", "GMT");
@@ -242,19 +242,6 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		SubflowInterceptingChainLifecycleWrapper deleteUserFromDatabaseFlow = getSubFlow("deleteUserFromDatabaseFlow");
 		deleteUserFromDatabaseFlow.initialise();
 		deleteTestEntityFromSandBox(deleteUserFromDatabaseFlow, createdUsersInDatabase);
-	}
-
-	private void deleteTestUsersFromSalesforce() throws InitialisationException, MuleException, Exception {
-		List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
-		for (Map<String, Object> c : createdUsersInDatabase) {
-			Map<String, Object> user = invokeRetrieveFlow(queryUserFromSalesforceFlow, c);
-			if (user != null) {
-				createdUsersInSalesforce.add(user);
-			}
-		}
-		SubflowInterceptingChainLifecycleWrapper deleteUserFromSalesforceFlow = getSubFlow("deleteUserFromSalesforceFlow");
-		deleteUserFromSalesforceFlow.initialise();
-		deleteTestEntityFromSandBox(deleteUserFromSalesforceFlow, createdUsersInSalesforce);
 	}
 	
 	private void deleteTestEntityFromSandBox(SubflowInterceptingChainLifecycleWrapper deleteFlow, List<Map<String, Object>> entitities) throws MuleException, Exception {
