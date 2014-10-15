@@ -71,6 +71,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	private static final String DATABASE_NAME = "SFDC2DBAccountBroadcast" + new Long(new Date().getTime()).toString();
 	private static final MySQLDbCreator DBCREATOR = new MySQLDbCreator(DATABASE_NAME, PATH_TO_SQL_SCRIPT, PATH_TO_TEST_PROPERTIES);
 	private static final Object EMAIL = "noreply@chatter.salesforce.com";
+	private static final Object EMAIL1 = "bwillisss@gmailtest.com";
 	private static String SFDC_ID = null;
 
 	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
@@ -152,7 +153,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		databaseUser0.put(VAR_USERNAME, "Name" + infixDatabase + "@example.com");
 		databaseUser0.put(VAR_FIRST_NAME, "fm" + infixDatabase);
 		databaseUser0.put(VAR_LAST_NAME, "ln" + infixDatabase);
-		databaseUser0.put(VAR_EMAIL, EMAIL);
+		databaseUser0.put(VAR_EMAIL, EMAIL1);
 		databaseUser0.put("ProfileId", SFDC_PROFILE_ID);
 		databaseUser0.put("Alias", "al0Db");
 		databaseUser0.put("TimeZoneSidKey", "GMT");
