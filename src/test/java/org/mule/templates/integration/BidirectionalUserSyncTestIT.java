@@ -6,12 +6,15 @@
 
 package org.mule.templates.integration;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -35,6 +38,8 @@ import org.mule.util.UUID;
 
 import com.mulesoft.module.batch.BatchTestHelper;
 import com.sforce.soap.partner.UpsertResult;
+
+import de.schlichtherle.io.FileInputStream;
 
 /**
  * The objective of this class is validating the correct behavior of the flows
@@ -68,9 +73,17 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
 	private List<Map<String, Object>> createdUsersInDatabase = new ArrayList<Map<String, Object>>();
+	private static String PROFILE_ID;
 
 	@BeforeClass
 	public static void beforeTestClass() {
+		Properties props = new Properties();
+		try {
+			props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		PROFILE_ID = props.getProperty("sfdc.user.profile.id");
 		System.setProperty("page.size", "1000");
 
 		// Set polling frequency to 10 seconds
@@ -84,6 +97,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		
 		System.setProperty("db.jdbcUrl", DBCREATOR.getDatabaseUrlWithName());
 		DBCREATOR.setUpDatabase();
+		
 	}
 
 	@Before
@@ -170,7 +184,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		salesforceUser0.put(VAR_FIRST_NAME, "fn" + infixSalesforce);
 		salesforceUser0.put(VAR_LAST_NAME, "ln" + infixSalesforce);
 		salesforceUser0.put(VAR_EMAIL, "email" + infixSalesforce + "@example.com");
-		salesforceUser0.put("ProfileId", "00e80000001C34eAAC");
+		salesforceUser0.put("ProfileId", PROFILE_ID);
 		salesforceUser0.put("Alias", "al0Sfdc");
 		salesforceUser0.put("TimeZoneSidKey", "GMT");
 		salesforceUser0.put("LocaleSidKey", "en_US");

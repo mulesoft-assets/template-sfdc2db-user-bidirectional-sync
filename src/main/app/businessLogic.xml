@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd" version="EE-3.5.0">
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd" version="EE-3.5.2">
     <data-mapper:config name="User_To_User" transformationGraphPath="user_to_user.grf" doc:name="User_To_User"/>
     <data-mapper:config name="User_To_User_1" transformationGraphPath="user_to_user_1.grf" doc:name="User_To_User_1"/>
     <data-mapper:config name="User_To_User_1User_To_User_2" transformationGraphPath="user_to_user_2.grf" doc:name="User_To_User_1User_To_User_2"/>
@@ -93,8 +93,9 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
                 <enricher doc:name="Message Enricher" source="#[payload]" target="#[recordVars['userInTargetInstance']]">
                     <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
                 </enricher>
+
             </batch:step>
-            <batch:step name="upsertUserInSalesforceStep" accept-expression="recordVars['userInTargetInstance'] is NullPayload ? true : org.mule.templates.date.DateUtils.dateToDateTime(payload['LastModifiedDate']).isAfter(org.mule.templates.date.DateUtils.ISOStringDateToDateTime(recordVars['userInTargetInstance']['LastModifiedDate'])) &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')">
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="recordVars['userInTargetInstance'] is NullPayload ? true : org.mule.templates.util.DateUtils.compareDates(recordVars['userInTargetInstance']['LastModifiedDate'], payload['LastModifiedDate'], '${system.time.zone}') &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')">
             	<data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map Database User To Salesforce User"/>
             	<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedDate'); 
   payload.remove('LastModifiedById');  
@@ -110,7 +111,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
   	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));  
   }  
   ]]></expression-component>
-  				<batch:commit size="200" doc:name="Batch Commit">
+                <batch:commit size="200" doc:name="Batch Commit">
                      <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in Salesforce"> 
                          <sfdc:objects ref="#[payload]"/> 
                      </sfdc:upsert> 

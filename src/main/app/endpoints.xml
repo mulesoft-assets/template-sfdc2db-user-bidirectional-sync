@@ -4,7 +4,7 @@
 	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.2"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
@@ -38,6 +38,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
                 <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
                 <db:select config-ref="Database" doc:name="fetch users from Database">
                     <db:parameterized-query><![CDATA[SELECT Alias, CommunityNickname, Email,EmailEncodingKey, FirstName,LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Title, Username FROM User WHERE LastModifiedDate > #[flowVars['databaseLastQueryDate']] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
+
 
                 </db:select>
             </processor-chain>
