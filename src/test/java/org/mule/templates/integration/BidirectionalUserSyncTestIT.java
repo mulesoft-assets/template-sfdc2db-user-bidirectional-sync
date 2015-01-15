@@ -76,10 +76,10 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
 	private List<Map<String, Object>> createdUsersInDatabase = new ArrayList<Map<String, Object>>();
+	private static String PROFILE_ID;
 
 	@BeforeClass
 	public static void beforeTestClass() {
-		
 		final Properties props = new Properties();
 		try {
 			props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
@@ -89,8 +89,9 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 			e.printStackTrace();
 		}
 	
-		SFDC_PROFILE_ID = props.getProperty("sfdc.user.profile.id");
+		
 		SFDC_ID = props.getProperty("sfdc.testuser.id");
+		SFDC_PROFILE_ID = props.getProperty("sfdc.user.profile.id");
 		System.setProperty("page.size", "1000");
 
 		// Set polling frequency to 10 seconds
@@ -104,6 +105,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		
 		System.setProperty("db.jdbcUrl", DBCREATOR.getDatabaseUrlWithName());
 		DBCREATOR.setUpDatabase();
+		
 	}
 
 	@Before
