@@ -8,12 +8,7 @@ package org.mule.templates.util;
 
 import java.sql.Timestamp;
 
-import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
-import com.ibm.icu.util.TimeZone;
 
 /**
  * The function of this class is provide date comparation an transformation
