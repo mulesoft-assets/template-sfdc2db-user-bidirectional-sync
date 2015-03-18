@@ -163,10 +163,13 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		databaseUser0.put("EmailEncodingKey", "ISO-8859-1");
 		databaseUser0.put("LanguageLocaleKey", "en_US");
 		databaseUser0.put("CommunityNickname", "cn" + infixDatabase);
+		
 		createdUsersInDatabase.add(databaseUser0);
 		
-		insertUserInDatabaseFlow.process(getTestEvent(Collections.singletonList(databaseUser0), MessageExchangePattern.REQUEST_RESPONSE));
-	
+		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+		list.add(databaseUser0);
+		insertUserInDatabaseFlow.process(getTestEvent(list, muleContext));
+		
 		Thread.sleep(1001);
 		
 		// Execution

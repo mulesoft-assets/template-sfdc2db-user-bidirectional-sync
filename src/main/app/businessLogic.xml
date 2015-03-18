@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd" version="EE-3.5.2">
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd" version="EE-3.6.0">
     <data-mapper:config name="User_To_User" transformationGraphPath="user_to_user.grf" doc:name="User_To_User"/>
     <data-mapper:config name="User_To_User_1" transformationGraphPath="user_to_user_1.grf" doc:name="User_To_User_1"/>
     <data-mapper:config name="User_To_User_1User_To_User_2" transformationGraphPath="user_to_user_2.grf" doc:name="User_To_User_1User_To_User_2"/>
