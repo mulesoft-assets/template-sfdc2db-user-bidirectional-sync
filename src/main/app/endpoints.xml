@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
 
-	<!-- This is the endponits file. In this file you should declare all your inbound and outbound endpoints, in order to control the access to your integration -->
+	<!-- This is the endpoints file. In this file you should declare all your inbound and outbound endpoints, in order to control the access to your integration -->
 
     <flow name="triggerSyncFromSalesforceFlow"  processingStrategy="synchronous" initialState="started">
 		<poll doc:name="Poll">
