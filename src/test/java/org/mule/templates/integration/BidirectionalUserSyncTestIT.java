@@ -149,8 +149,8 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	public void whenUpdatingAnUserInDatabaseTheBelongingUserGetsUpdatedInSalesforce() throws MuleException, Exception {
 		// test db -> sfdc
 
-		Map<String, Object> databaseUser0 = new HashMap<String, Object>();
-		String infixDatabase = "_0_DB_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
+		final Map<String, Object> databaseUser0 = new HashMap<String, Object>();
+		final String infixDatabase = "_0_DB_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
 		databaseUser0.put(VAR_ID, UUID.getUUID());
 		databaseUser0.put(VAR_USERNAME, "Name" + infixDatabase + "@example.com");
 		databaseUser0.put(VAR_FIRST_NAME, "fm" + infixDatabase);
@@ -166,7 +166,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		
 		createdUsersInDatabase.add(databaseUser0);
 		
-		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+		final List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		list.add(databaseUser0);
 		insertUserInDatabaseFlow.process(getTestEvent(list, muleContext));
 		
@@ -177,9 +177,9 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 		// Assertions
 		{
-			Object object =  queryUser(databaseUser0, queryUserFromDatabaseFlow);
+			final Object object =  queryUser(databaseUser0, queryUserFromDatabaseFlow);
 			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
-			Map<String, Object> payload = (Map<String, Object>) object;
+			final Map<String, Object> payload = (Map<String, Object>) object;
 			Assert.assertEquals("The user should have been sync and new name must match", databaseUser0.get(VAR_FIRST_NAME), payload.get(VAR_FIRST_NAME));
 			Assert.assertEquals("The user should have been sync and new title must match", databaseUser0.get(VAR_LAST_NAME), payload.get(VAR_LAST_NAME));
 		}
@@ -189,8 +189,8 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 		// test sfdc -> db
 		
-		Map<String, Object> salesforceUser0 = new HashMap<String, Object>();
-		String infixSalesforce = "_0_SFDC_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
+		final Map<String, Object> salesforceUser0 = new HashMap<String, Object>();
+		final String infixSalesforce = "_0_SFDC_" + ANYPOINT_TEMPLATE_NAME + "_" + System.currentTimeMillis();
 		salesforceUser0.put(VAR_ID, SFDC_ID);
 		salesforceUser0.put(VAR_USERNAME, "Name" + infixSalesforce + "@example.com");
 		salesforceUser0.put(VAR_FIRST_NAME, "fn" + infixSalesforce);
@@ -205,7 +205,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		salesforceUser0.put("CommunityNickname", "cn" + infixSalesforce);
 		createdUsersInSalesforce.add(salesforceUser0);
 
-		MuleEvent event = upsertUserInSalesforceFlow.process(getTestEvent(Collections.singletonList(salesforceUser0), MessageExchangePattern.REQUEST_RESPONSE));
+		final MuleEvent event = upsertUserInSalesforceFlow.process(getTestEvent(Collections.singletonList(salesforceUser0), MessageExchangePattern.REQUEST_RESPONSE));
 		salesforceUser0.put(VAR_ID, (((UpsertResult) ((List<?>) event.getMessage().getPayload()).get(0))).getId());
 
 		Thread.sleep(1001);
@@ -218,15 +218,15 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		
 		// Assertions
 		{
-			Object object = queryUser(salesforceUser0, queryUserFromDatabaseFlow);
+			final Object object = queryUser(salesforceUser0, queryUserFromDatabaseFlow);
 			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
-			Map<String, Object> payload = (Map<String, Object>) object;
+			final Map<String, Object> payload = (Map<String, Object>) object;
 			Assert.assertEquals("The user should have been sync and new name must match", salesforceUser0.get(VAR_FIRST_NAME), payload.get(VAR_FIRST_NAME));
 			Assert.assertEquals("The user should have been sync and new title must match", salesforceUser0.get(VAR_LAST_NAME), payload.get(VAR_LAST_NAME));
 		}
 		
 		// cleanup
-		SubflowInterceptingChainLifecycleWrapper deleteUsersAfterSfdc2Database = getSubFlow("deleteUsersAfterSfdc2Database");
+		final SubflowInterceptingChainLifecycleWrapper deleteUsersAfterSfdc2Database = getSubFlow("deleteUsersAfterSfdc2Database");
 		deleteUsersAfterSfdc2Database.initialise();
 		deleteUsersAfterSfdc2Database.process(getTestEvent(createdUsersInSalesforce, MessageExchangePattern.REQUEST_RESPONSE));
 	}
@@ -245,13 +245,13 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	}
 	
 	private void deleteTestUsersFromDatabase() throws InitialisationException, MuleException, Exception {
-		SubflowInterceptingChainLifecycleWrapper deleteUserFromDatabaseFlow = getSubFlow("deleteUserFromDatabaseFlow");
+		final SubflowInterceptingChainLifecycleWrapper deleteUserFromDatabaseFlow = getSubFlow("deleteUserFromDatabaseFlow");
 		deleteUserFromDatabaseFlow.initialise();
 		deleteTestEntityFromSandBox(deleteUserFromDatabaseFlow, createdUsersInDatabase);
 	}
 	
 	private void deleteTestEntityFromSandBox(SubflowInterceptingChainLifecycleWrapper deleteFlow, List<Map<String, Object>> entitities) throws MuleException, Exception {
-		List<String> idList = new ArrayList<String>();
+		final List<String> idList = new ArrayList<String>();
 		for (Map<String, Object> c : entitities) {
 			idList.add(c.get(VAR_ID).toString());
 		}
@@ -260,8 +260,8 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	}
 
 	protected Map<String, Object> invokeRetrieveFlow(InterceptingChainLifecycleWrapper flow, Map<String, Object> payload) throws Exception {
-		MuleEvent event = flow.process(getTestEvent(payload, MessageExchangePattern.REQUEST_RESPONSE));
-		Object resultPayload = event.getMessage().getPayload();
+		final MuleEvent event = flow.process(getTestEvent(payload, MessageExchangePattern.REQUEST_RESPONSE));
+		final Object resultPayload = event.getMessage().getPayload();
 		return resultPayload instanceof NullPayload ? null : (Map<String, Object>) resultPayload;
 	}
 
