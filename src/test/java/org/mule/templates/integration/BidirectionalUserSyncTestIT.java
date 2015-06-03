@@ -135,6 +135,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		// Flow for updating a user in Database
 		insertUserInDatabaseFlow = getSubFlow("insertUserInDatabaseFlow");
 		insertUserInDatabaseFlow.initialise();
+		insertUserInDatabaseFlow.setMuleContext(muleContext);
 
 		// Flow for querying the user in Salesforce
 		queryUserFromSalesforceFlow = getSubFlow("queryUserFromSalesforceFlow");
