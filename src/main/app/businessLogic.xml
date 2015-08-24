@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore"
-	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core"
+<mule version="EE-3.7.1"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" 
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
+	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
-http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd" version="EE-3.6.0">
-    <data-mapper:config name="User_To_User" transformationGraphPath="user_to_user.grf" doc:name="User_To_User"/>
-    <data-mapper:config name="User_To_User_1" transformationGraphPath="user_to_user_1.grf" doc:name="User_To_User_1"/>
-    <data-mapper:config name="User_To_User_1User_To_User_2" transformationGraphPath="user_to_user_2.grf" doc:name="User_To_User_1User_To_User_2"/>
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+
    
     <batch:job name="fromSalesforceToDBBatch" max-failed-records="1">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
@@ -23,44 +25,70 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
 
             <batch:step name="getUserInDatabaseStep" >
  
-                <enricher source="#[payload.isEmpty() ? NullPayload.getInstance() : payload[0]]" target="#[recordVars['userInTargetInstance']]" doc:name="store user">
+                <enricher   doc:name="save Id and LastModifiedDate to payload">
                     <db:select config-ref="Database" doc:name="query user from Database">
-                        <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload['Email']]]]></db:parameterized-query>
+                        <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload.Email]]]></db:parameterized-query>
+
 
 
                     </db:select>
+                    <enrich source="#[payload.isEmpty() ? null : payload[0].Id]" target="#[payload.IdInDB]"/>
+                    <enrich source="#[payload.isEmpty() ? null : payload[0].LastModifiedDate]" target="#[payload.LastModifiedDateInDB]"/>
                 </enricher>
-                <expression-component doc:name="map ProfileId"><![CDATA[// We map the profile IDs from Salesforce to Database, each profileId from the left (source) will be map to the one on the right (target)
- profilesMap = ${from.sfdc.to.db.profilesMap}; 
- if (profilesMap) { 
- 	payload.put('ProfileId', profilesMap.get(payload['ProfileId'])); 
- } 
- ]]></expression-component> 
+
+ 
+            </batch:step>
+            <batch:step name="prepareToUpsertIntoDBStep">
+                <enricher target="#[payload.ProfileId]" doc:name="Enrich payload with ProfileId">
+                    <set-payload value="#[ ${from.sfdc.to.db.profilesMap}.getClass() == java.lang.Boolean ?  payload.ProfileId : ${from.sfdc.to.db.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
+                </enricher>
+                <dw:transform-message doc:name="map SFDC User to DB User">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	(Id					: payload.IdInDB) when payload.IdInDB != null,
+	Name 				: payload.Name,
+	Username 			: payload.Username,
+	FirstName 			: payload.FirstName,
+	LastName 			: payload.LastName,
+	Alias 				: payload.Alias,
+	CommunityNickname 	: payload.CommunityNickname,
+	Email 				: payload.Email,
+	EmailEncodingKey 	: payload.EmailEncodingKey,
+	LanguageLocaleKey 	: payload.LanguageLocaleKey,
+	LocaleSidKey 		: payload.LocaleSidKey,
+	ProfileId			: payload.ProfileId,
+	TimeZoneSidKey 		: payload.TimeZoneSidKey
+}]]></dw:set-payload>
+                </dw:transform-message>
             </batch:step>
             
-            <batch:step name="updateUsersInDatabaseStep" accept-expression="(!(recordVars['userInTargetInstance'] is NullPayload) &amp;&amp; org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload['LastModifiedDate']).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(recordVars['userInTargetInstance']['LastModifiedDate'])) &amp;&amp; '${sfdc.integration.user.id}' != payload.get('LastModifiedById'))">
-                <data-mapper:transform config-ref="User_To_User" doc:name="map Salesforce User To Database User"/>
-                <expression-component doc:name="prepare user for update"><![CDATA[payload.put('Id', recordVars['userInTargetInstance'].get('Id'));
-  ]]></expression-component> 
+            <batch:step name="updateUsersInDatabaseStep" accept-expression="(payload.IdInDB != null &amp;&amp; org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload.LastModifiedDate).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(payload.LastModifiedDateInDB)) &amp;&amp; '${sfdc.integration.user.id}' != payload.LastModifiedById)">
+ 
  
                 <batch:commit size="200" doc:name="Batch Commit">
+
                     <db:update config-ref="Database" bulkMode="true" doc:name="update users in Database">
                         <db:parameterized-query><![CDATA[UPDATE User SET
-  	Id = #[payload['Id']],  
-  	Alias = #[payload['Alias']],  
-  	Email = #[payload['Email']],  
-  	EmailEncodingKey = #[payload['EmailEncodingKey']],  
-  	FirstName = #[payload['FirstName']],  
-  	LanguageLocaleKey = #[payload['LanguageLocaleKey']],  
-  	LastModifiedById = CURRENT_USER,  
-  	LastModifiedDate = CURRENT_TIMESTAMP,  
-  	LastName = #[payload['LastName']],  
-  	LocaleSidKey = #[payload['LocaleSidKey']],  
-  	TimeZoneSidKey = #[payload['TimeZoneSidKey']],  
-  	Username = #[payload['Username']],  
-  	ProfileId = #[payload['ProfileId']],  
-  	CommunityNickname = #[payload['CommunityNickname']]  
-  WHERE Id = #[payload['Id']]]]></db:parameterized-query> 
+  	Id 					= #[payload.Id],  
+  	Alias 				= #[payload.Alias],  
+  	Email 				= #[payload.Email],  
+  	EmailEncodingKey 	= #[payload.EmailEncodingKey],  
+  	FirstName 			= #[payload.FirstName],  
+  	LanguageLocaleKey 	= #[payload.LanguageLocaleKey],  
+  	LastModifiedById 	= CURRENT_USER,  
+  	LastModifiedDate 	= CURRENT_TIMESTAMP,  
+  	LastName 			= #[payload.LastName],  
+  	LocaleSidKey 		= #[payload.LocaleSidKey],  
+  	TimeZoneSidKey 		= #[payload.TimeZoneSidKey],  
+  	Username 			= #[payload.Username],  
+  	ProfileId 			= #[payload.ProfileId],  
+  	CommunityNickname 	= #[payload.CommunityNickname]  
+  WHERE Id = #[payload.Id]]]></db:parameterized-query>
+
+
+ 
  
 
 
@@ -69,12 +97,32 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
                 </batch:commit>
             </batch:step>
             
-            <batch:step name="insertUsersToDatabaseStep" accept-expression="recordVars['userInTargetInstance'] is NullPayload">
-                <data-mapper:transform config-ref="User_To_User_1" doc:name="map Salesforce User To Database User"/>
+            <batch:step name="insertUsersToDatabaseStep" accept-expression="payload.IdInDB == null">
+
+
                 
                 <batch:commit size="200" doc:name="Batch Commit">
+
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
-                        <db:parameterized-query><![CDATA[INSERT INTO User(Id,Alias,Email,EmailEncodingKey,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,TimeZoneSidKey,Username,ProfileId,CommunityNickname)VALUES(UUID(),	#[payload['Alias']],#[payload['Email']],#[payload['EmailEncodingKey']],#[payload['FirstName']],#[payload['LanguageLocaleKey']],CURRENT_USER,CURRENT_TIMESTAMP,#[payload['LastName']],#[payload['LocaleSidKey']],#[payload['TimeZoneSidKey']],#[payload['Username']],#[payload['ProfileId']],#[payload['CommunityNickname']])]]></db:parameterized-query>
+                        <db:parameterized-query><![CDATA[INSERT INTO User(Id,Alias,Email,EmailEncodingKey,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,TimeZoneSidKey,Username,ProfileId,CommunityNickname)
+VALUES(
+UUID(),	
+#[payload.Alias],
+#[payload.Email],
+#[payload.EmailEncodingKey],
+#[payload.FirstName],
+#[payload.LanguageLocaleKey],
+CURRENT_USER,CURRENT_TIMESTAMP,
+#[payload.LastName],
+#[payload.LocaleSidKey],
+#[payload.TimeZoneSidKey],
+#[payload.Username],
+#[payload.ProfileId],
+#[payload.CommunityNickname]
+)]]></db:parameterized-query>
+
+
+
                     </db:insert>
 
                     <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
@@ -90,28 +138,42 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
             <batch:step name="getUserInSalesforceStep">
-                <enricher doc:name="Message Enricher" source="#[payload]" target="#[recordVars['userInTargetInstance']]">
-                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload['Email']]')" doc:name="query user from Salesforce"/>
+                <enricher doc:name="save Id and LastModifiedDate to payload"  >
+                    <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, LastModifiedDate FROM User WHERE (Email = '#[payload.Email]')" doc:name="query user from Salesforce"/>
+                    <enrich source="#[payload == null ? null : payload.Id]" target="payload.IdInSFDC"/>
+                    <enrich source="#[payload == null ? null : payload.LastModifiedDate]" target="payload.LastModifiedDateInSFDC"/>
                 </enricher>
 
             </batch:step>
-            <batch:step name="upsertUserInSalesforceStep" accept-expression="recordVars['userInTargetInstance'] is NullPayload ? true : org.mule.templates.util.DateUtils.compareDates(recordVars['userInTargetInstance']['LastModifiedDate'], payload['LastModifiedDate'], '${system.time.zone}') &amp;&amp; '${db.integration.user.id}' != payload.get('LastModifiedById')">
-            	<data-mapper:transform config-ref="User_To_User_1User_To_User_2" doc:name="map Database User To Salesforce User"/>
-            	<expression-component doc:name="prepare user for upsert"><![CDATA[payload.remove('LastModifiedDate'); 
-  payload.remove('LastModifiedById');  
+            <batch:step name="prepareToUpsertIntoSFDCStep">
+                <enricher target="#[payload.ProfileId]" doc:name="enrich payload with ProfileId">
+                    <set-payload value="#[ ${from.db.to.sfdc.profilesMap}.getClass() == java.lang.Boolean ?  payload.ProfileId : ${from.db.to.sfdc.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
+                </enricher>
+                <dw:transform-message doc:name="map DB User to SFDC User">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	(Id 				: payload.IdInSFDC) when payload.IdInSFDC != null,
+	(Username 			: payload.Username) when payload.IdInSFDC == null,
+	Name 				: payload.Name,
+	FirstName 			: payload.FirstName,
+	Alias 				: payload.Alias,
+	LastName 			: payload.LastName,
+	CommunityNickname 	: payload.CommunityNickname,
+	Email 				: payload.Email,
+	EmailEncodingKey 	: payload.EmailEncodingKey,
+	LanguageLocaleKey 	: payload.LanguageLocaleKey,
+	LocaleSidKey 		: payload.LocaleSidKey,
+	ProfileId 			: payload.ProfileId,
+	TimeZoneSidKey 		: payload.TimeZoneSidKey
+}]]></dw:set-payload>
+                </dw:transform-message>
+            </batch:step>
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.util.DateUtils.compareDates(payload.LastModifiedDateInSFDC, payload.LastModifiedDate, '${system.time.zone}') &amp;&amp; '${db.integration.user.id}' != payload.LastModifiedById">
 
-  if(!(recordVars['userInTargetInstance'] is NullPayload)) { 
-  	payload.put('Id',recordVars['userInTargetInstance'].get('Id')); 
-  	payload.remove('Username');  
-  	  } 
-
-  // We map the profile IDs from Database to Salesforce, each profileId from the left (source) will be map to the one on the right (target)  
-  profilesMap = ${from.db.to.sfdc.profilesMap};  
-  if (profilesMap) {  
-  	payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));  
-  }  
-  ]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
+
                      <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in Salesforce"> 
                          <sfdc:objects ref="#[payload]"/> 
                      </sfdc:upsert> 

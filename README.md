@@ -1,5 +1,5 @@
 
-# Anypoint Template: Salesforce to Database User Bidirectional Sync
+# Anypoint Template: Salesforce and Database User Bidirectional Sync
 
 + [License Agreement](#licenseagreement)
 + [Use Case](#usecase)
@@ -49,12 +49,12 @@ Let's say we want to keep Salesforce synchronized with Database. Then, the integ
 
 And so on...
   
-The question for recent changes since a certain moment is nothing but a [poll inbound][1] with a [watermark][2] defined.
+The question for recent changes since a certain moment is nothing but a [poller](https://developer.mulesoft.com/docs/display/current/Poll+Reference) with a watermark defined.
 
 # Considerations <a name="considerations"/>
 
 **Note:** This particular Anypoint Template illustrate the synchronization use case between SalesForce and a Database, thus it requires a DB instance to work.
-The Anypoint Template comes packaged with a SQL script to create the DB table that uses. 
+The Anypoint Template comes packaged with a SQL script to create the DB table that it uses. 
 It is the user responsibility to use that script to create the table in an available schema and change the configuration accordingly.
 The SQL script file can be found in [src/main/resources/sfdc2jdbc.sql](../master/src/main/resources/sfdc2jdbc.sql)
 
@@ -65,7 +65,7 @@ This template is customized for MySQL. To use it with different SQL implementati
 * replace attribute `driverClassName` of `db:generic-config` element with class name of desired JDBC driver in [src/main/app/config.xml](../master/src/main/app/config.xml)
 * update JDBC URL in `mule.*.properties` file
 
-There are a couple of things you should take into account before running this kick:
+There are a couple of things you should take into account before running this template:
 
 1. **Users cannot be deleted in SalesForce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
 2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. Check out the next section to define a map between Profile Ids (from the source account to the ones in the target account and the other way around).
@@ -136,7 +136,7 @@ There are no particular considerations for this Anypoint Template regarding Sale
 
 
 # Run it! <a name="runit"/>
-Simple steps to get Salesforce to Database User Bidirectional Sync running.
+Simple steps to get Salesforce and Database User Bidirectional Sync running.
 
 
 ## Running on premise <a name="runonopremise"/>
@@ -186,17 +186,17 @@ Mule Studio provides you with really easy way to deploy your Template directly t
 ## Properties to be configured (With examples) <a name="propertiestobeconfigured"/>
 In order to use this Mule Anypoint Template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 ### Application configuration
-+ polling.frequency `10000`  
++ poll.frequencyMillis `10000`  
 This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
 
 + watermark.default.expression `2014-02-25T11:00:00.000Z`  
-This property is an important one, as it configures what should be the start point of the synchronization.The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC][3]
+This property is an important one, as it configures what should be the start point of the synchronization. The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC](https://help.salesforce.com/HTViewSolution?id=000004680&language=en_US)
 
 ### SalesForce Connector configuration
 + sfdc.username `jorge.drexler@mail.com`
 + sfdc.password `Noctiluca123`
 + sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
-+ sfdc.url `https://login.salesforce.com/services/Soap/u/28.0`
++ sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.integration.user.id `005n0000000T3QkAAK`
 
 ### Database Connector configuration for

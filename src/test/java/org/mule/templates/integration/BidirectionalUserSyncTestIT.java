@@ -70,8 +70,8 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 	private static final String PATH_TO_SQL_SCRIPT = "src/main/resources/sfdc2jdbc.sql";
 	private static final String DATABASE_NAME = "SFDC2DBAccountBroadcast" + new Long(new Date().getTime()).toString();
 	private static final MySQLDbCreator DBCREATOR = new MySQLDbCreator(DATABASE_NAME, PATH_TO_SQL_SCRIPT, PATH_TO_TEST_PROPERTIES);
-	private static final Object EMAIL = "noreply@chatter.salesforce.com";
-	private static final Object EMAIL1 = "bwillisss@gmailtest.com";
+	private static final String EMAIL = "noreply@chatter.salesforce.com";
+	private static final String EMAIL1 = "bwillisss@gmailtest.com";
 	private static String SFDC_ID = null;
 
 	private List<Map<String, Object>> createdUsersInSalesforce = new ArrayList<Map<String, Object>>();
@@ -179,7 +179,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 		// Assertions
 		{
 			final Object object =  queryUser(databaseUser0, queryUserFromDatabaseFlow);
-			Assert.assertFalse("Synchronized user should not be null payload", object instanceof NullPayload);
+			Assert.assertFalse("Synchronized user should not be null payload", object == null);
 			final Map<String, Object> payload = (Map<String, Object>) object;
 			Assert.assertEquals("The user should have been sync and new name must match", databaseUser0.get(VAR_FIRST_NAME), payload.get(VAR_FIRST_NAME));
 			Assert.assertEquals("The user should have been sync and new title must match", databaseUser0.get(VAR_LAST_NAME), payload.get(VAR_LAST_NAME));
