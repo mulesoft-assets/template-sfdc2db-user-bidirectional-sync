@@ -55,8 +55,6 @@ There are a couple of things you should take into account before running this te
 + poll.frequencyMillis `10000`  
 This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
 
-+ watermark.default.expression `2014-02-25T11:00:00.000Z`  
-This property is an important one, as it configures what should be the start point of the synchronization. The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC](https://help.salesforce.com/HTViewSolution?id=000004680&language=en_US)
 
 ### SalesForce Connector configuration
 + sfdc.username `jorge.drexler@mail.com`
@@ -64,10 +62,15 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
 + sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.integration.user.id `005n0000000T3QkAAK`
++ sfdc.watermark.default.expression `2015-08-25T11:00:00.000Z`  
+This property is an important one, as it configures what should be the start point of the synchronization. The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC](https://help.salesforce.com/HTViewSolution?id=000004680&language=en_US)
 
 ### Database Connector configuration for
 + db.jdbcUrl `jdbc:mysql://localhost:3306/mule?user=mule&password=mule`
 + db.integration.user.id `mule@localhost`
++ db.watermark.default.expression `2015-08-25 11:00:00.000` 
+This property is an important one, as it configures what should be the start point of the synchronization. 
+
 
 + from.sfdc.to.db.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 + from.db.to.sfdc.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  

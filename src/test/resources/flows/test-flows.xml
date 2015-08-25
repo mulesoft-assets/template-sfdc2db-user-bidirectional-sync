@@ -51,12 +51,12 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 WHERE Id = #[payload.Id]]]></db:parameterized-query>
 
                     </db:update>
-        <logger level="INFO" message="Update User in B result: #[payload]" doc:name="Logger"/>
+        <logger level="INFO" message="Update User in Database result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     
     <sub-flow name="queryUserFromSalesforceFlow" >
         <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, CommunityNickname FROM User WHERE Email = '#[payload.Email]'" doc:name="Query user from Salesforce"/>
-        <logger level="INFO" message="Query user from A result: #[payload]" doc:name="Logger"/>
+        <logger level="INFO" message="Query user from Salesforce result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     
     <sub-flow name="queryUserFromDatabaseFlow" >
@@ -66,10 +66,9 @@ WHERE Id = #[payload.Id]]]></db:parameterized-query>
             </db:select>
 
                     </enricher>
-        <logger level="INFO" message="Query user from B result: #[payload]" doc:name="Logger"/>
+        <logger level="INFO" message="Query user from Database result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     <sub-flow name="insertUserInDatabaseFlow" >
-        <logger message="Inserting test user into Salesforce: #[payload]" level="INFO" doc:name="Logger"/>
         <db:insert config-ref="Database" bulkMode="true" doc:name="Insert user to Database">
             <db:parameterized-query><![CDATA[INSERT INTO User (
 	Id,
@@ -106,7 +105,7 @@ WHERE Id = #[payload.Id]]]></db:parameterized-query>
 )]]></db:parameterized-query>
         </db:insert>
 
-        <logger message="Insert user to B result: #[payload]" level="INFO" doc:name="Logger"/>
+        <logger message="Insert user to Database result: #[payload]" level="INFO" doc:name="Logger"/>
     
     </sub-flow>
     <sub-flow name="deleteUserFromSalesforceFlow" >

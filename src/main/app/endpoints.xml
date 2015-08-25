@@ -5,7 +5,6 @@
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
 	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 
-	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" 
@@ -13,7 +12,6 @@
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
@@ -22,11 +20,12 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 
     <flow name="triggerSyncFromSalesforceFlow"  processingStrategy="synchronous" initialState="started">
 		<poll doc:name="Poll">
-			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
+			<fixed-frequency-scheduler frequency="${poll.frequencyMillis}" startDelay="1000" />
 			<watermark variable="salesforceLastQueryDate" default-expression="${sfdc.watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
 				<expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
-                <sfdc:query config-ref="Salesforce" query="SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username,CommunityNickname FROM User WHERE LastModifiedDate &gt; #[flowVars.salesforceLastQueryDate] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
+                <sfdc:query config-ref="Salesforce" query="dsql:SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username,CommunityNickname FROM User WHERE LastModifiedDate &gt; #[flowVars.salesforceLastQueryDate] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
+
             </processor-chain>
 
 		</poll>
@@ -36,7 +35,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
     
 	<flow name="triggerSyncFromDatabaseFlow"  processingStrategy="synchronous" initialState="started">
    		<poll doc:name="Poll">
-			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="1000" />
+			<fixed-frequency-scheduler frequency="${poll.frequencyMillis}" startDelay="1000" />
 			<watermark variable="databaseLastQueryDate" default-expression="${db.watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>

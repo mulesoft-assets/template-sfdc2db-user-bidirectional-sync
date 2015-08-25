@@ -40,7 +40,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
             </batch:step>
             <batch:step name="prepareToUpsertIntoDBStep">
                 <enricher target="#[payload.ProfileId]" doc:name="Enrich payload with ProfileId">
-                    <set-payload value="#[ ${from.sfdc.to.db.profilesMap}.getClass() == java.lang.Boolean ?  payload.ProfileId : ${from.sfdc.to.db.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
+                    <set-payload value="#[ ${from.sfdc.to.db.profilesMap} instanceof java.lang.Boolean ?  payload.ProfileId : ${from.sfdc.to.db.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
                 </enricher>
                 <dw:transform-message doc:name="map SFDC User to DB User">
                     <dw:set-payload><![CDATA[%dw 1.0
@@ -93,7 +93,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 
 
                     </db:update>
-                    <logger message="Update Database B response: #[payload]" level="INFO" doc:name="log response"/>
+                    <logger message="Update Database response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>
             
@@ -125,7 +125,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 
                     </db:insert>
 
-                    <logger message="Insert Database B response: #[payload]" level="INFO" doc:name="log response"/>
+                    <logger message="Insert Database response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step> 
         </batch:process-records>
@@ -147,7 +147,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
             </batch:step>
             <batch:step name="prepareToUpsertIntoSFDCStep">
                 <enricher target="#[payload.ProfileId]" doc:name="enrich payload with ProfileId">
-                    <set-payload value="#[ ${from.db.to.sfdc.profilesMap}.getClass() == java.lang.Boolean ?  payload.ProfileId : ${from.db.to.sfdc.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
+                    <set-payload value="#[ ${from.db.to.sfdc.profilesMap} instanceof java.lang.Boolean ?  payload.ProfileId : ${from.db.to.sfdc.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
                 </enricher>
                 <dw:transform-message doc:name="map DB User to SFDC User">
                     <dw:set-payload><![CDATA[%dw 1.0
@@ -174,10 +174,11 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 
                 <batch:commit size="200" doc:name="Batch Commit">
 
+
                      <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in Salesforce"> 
                          <sfdc:objects ref="#[payload]"/> 
                      </sfdc:upsert> 
-                    <logger message="Upsert Salesforce A response: #[payload]" level="INFO" doc:name="log response"/> 
+                    <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log response"/> 
                 </batch:commit>
             </batch:step>
             
