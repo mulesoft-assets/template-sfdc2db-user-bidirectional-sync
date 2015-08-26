@@ -39,9 +39,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
  
             </batch:step>
             <batch:step name="prepareToUpsertIntoDBStep">
-                <enricher target="#[payload.ProfileId]" doc:name="Enrich payload with ProfileId">
-                    <set-payload value="#[ ${from.sfdc.to.db.profilesMap} instanceof java.lang.Boolean ?  payload.ProfileId : ${from.sfdc.to.db.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
-                </enricher>
+
                 <dw:transform-message doc:name="map SFDC User to DB User">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
@@ -58,13 +56,14 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
 	EmailEncodingKey 	: payload.EmailEncodingKey,
 	LanguageLocaleKey 	: payload.LanguageLocaleKey,
 	LocaleSidKey 		: payload.LocaleSidKey,
-	ProfileId			: payload.ProfileId,
+	ProfileId			: payload.ProfileId when flowVars.sfdc2dbProfilesMap == false otherwise flowVars.sfdc2dbProfilesMap[(payload.ProfileId)],
 	TimeZoneSidKey 		: payload.TimeZoneSidKey
 }]]></dw:set-payload>
                 </dw:transform-message>
+
             </batch:step>
             
-            <batch:step name="updateUsersInDatabaseStep" accept-expression="(payload.IdInDB != null &amp;&amp; org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload.LastModifiedDate).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(payload.LastModifiedDateInDB)) &amp;&amp; '${sfdc.integration.user.id}' != payload.LastModifiedById)">
+            <batch:step name="updateUsersInDatabaseStep" accept-expression="payload.IdInDB != null &amp;&amp; org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload.LastModifiedDate).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(payload.LastModifiedDateInDB))">
  
  
                 <batch:commit size="200" doc:name="Batch Commit">
@@ -103,6 +102,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
                 
                 <batch:commit size="200" doc:name="Batch Commit">
 
+
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
                         <db:parameterized-query><![CDATA[INSERT INTO User(Id,Alias,Email,EmailEncodingKey,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,TimeZoneSidKey,Username,ProfileId,CommunityNickname)
 VALUES(
@@ -120,6 +120,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 #[payload.ProfileId],
 #[payload.CommunityNickname]
 )]]></db:parameterized-query>
+
 
 
 
@@ -146,9 +147,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 
             </batch:step>
             <batch:step name="prepareToUpsertIntoSFDCStep">
-                <enricher target="#[payload.ProfileId]" doc:name="enrich payload with ProfileId">
-                    <set-payload value="#[ ${from.db.to.sfdc.profilesMap} instanceof java.lang.Boolean ?  payload.ProfileId : ${from.db.to.sfdc.profilesMap}.get(payload.ProfileId)]" doc:name="load profile ID based on property value"/>
-                </enricher>
+
                 <dw:transform-message doc:name="map DB User to SFDC User">
                     <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
@@ -165,12 +164,12 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 	EmailEncodingKey 	: payload.EmailEncodingKey,
 	LanguageLocaleKey 	: payload.LanguageLocaleKey,
 	LocaleSidKey 		: payload.LocaleSidKey,
-	ProfileId 			: payload.ProfileId,
+	ProfileId			: payload.ProfileId when flowVars.db2sfdcProfilesMap == false otherwise flowVars.db2sfdcProfilesMap[(payload.ProfileId)],
 	TimeZoneSidKey 		: payload.TimeZoneSidKey
 }]]></dw:set-payload>
                 </dw:transform-message>
             </batch:step>
-            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.util.DateUtils.compareDates(payload.LastModifiedDateInSFDC, payload.LastModifiedDate, '${system.time.zone}') &amp;&amp; '${db.integration.user.id}' != payload.LastModifiedById">
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.util.DateUtils.compareDates(payload.LastModifiedDateInSFDC, payload.LastModifiedDate, '${system.time.zone}') ">
 
                 <batch:commit size="200" doc:name="Batch Commit">
 
