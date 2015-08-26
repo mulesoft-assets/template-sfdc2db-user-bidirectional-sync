@@ -188,6 +188,7 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 ### Application configuration
 + poll.frequencyMillis `10000`  
 This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
++ page.size `200`
 
 
 ### SalesForce Connector configuration

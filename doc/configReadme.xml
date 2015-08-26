@@ -54,6 +54,7 @@ There are a couple of things you should take into account before running this te
 		<![CDATA[
 + poll.frequencyMillis `10000`  
 This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
++ page.size `200`
 
 
 ### SalesForce Connector configuration
