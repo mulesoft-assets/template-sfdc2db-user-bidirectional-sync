@@ -55,7 +55,7 @@ WHERE Id = #[payload.Id]]]></db:parameterized-query>
     </sub-flow>
     
     <sub-flow name="queryUserFromSalesforceFlow" >
-        <sfdc:query-single config-ref="Salesforce" query="SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, CommunityNickname FROM User WHERE Email = '#[payload.Email]'" doc:name="Query user from Salesforce"/>
+        <sfdc:query-single config-ref="Salesforce" query="dsql:SELECT Id, Email, FirstName, LastName, Alias, Title, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, CommunityNickname FROM User WHERE Email = '#[payload.Email]'" doc:name="Query user from Salesforce"/>
         <logger level="INFO" message="Query user from Salesforce result: #[payload]" doc:name="Logger"/>
     </sub-flow>
     

@@ -24,11 +24,12 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 			<watermark variable="salesforceLastQueryDate" default-expression="${sfdc.watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
 				<expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
-                <sfdc:query config-ref="Salesforce" query="dsql:SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username,CommunityNickname FROM User WHERE LastModifiedDate &gt; #[flowVars.salesforceLastQueryDate] ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
+                <sfdc:query config-ref="Salesforce" query="dsql:SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username,CommunityNickname FROM User WHERE LastModifiedDate &gt; #[flowVars.salesforceLastQueryDate] AND (LastModifiedById &lt;&gt; '${sfdc.integration.user.id}') ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch users from Salesforce"/>
 
             </processor-chain>
 
 		</poll>
+        <set-variable variableName="sfdc2dbProfilesMap" value="#[${from.sfdc.to.db.profilesMap}]" doc:name="load sfdc2db ProfilesMap"/>
         <batch:execute name="fromSalesforceToDBBatch" doc:name="trigger fromSalesforceToDBBatch"/>
 		<exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
 	</flow>
@@ -40,7 +41,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
                 <db:select config-ref="Database" doc:name="fetch users from Database">
-                    <db:parameterized-query><![CDATA[SELECT Alias, CommunityNickname, Email,EmailEncodingKey, FirstName,LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Title, Username FROM User WHERE LastModifiedDate > #[flowVars.databaseLastQueryDate] ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
+                    <db:parameterized-query><![CDATA[SELECT Alias, CommunityNickname, Email,EmailEncodingKey, FirstName,LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Title, Username FROM User WHERE LastModifiedDate > #[flowVars.databaseLastQueryDate] AND (LastModifiedById != '${db.integration.user.id}') ORDER BY LastModifiedDate ASC]]></db:parameterized-query>
 
 
 
@@ -48,6 +49,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
             </processor-chain>
 
 		</poll>
+        <set-variable variableName="db2sfdcProfilesMap" value="#[${from.db.to.sfdc.profilesMap}]" doc:name="load db2sfdc ProfilesMap"/>
         <batch:execute name="fromDBToSalesforceBatch" doc:name="trigger fromDBToSalesforceBatch"/>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
     </flow>

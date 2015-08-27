@@ -17,10 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -172,7 +168,7 @@ public class BidirectionalUserSyncTestIT extends AbstractTemplatesTestCase {
 
 		// Assertions
 		{
-			final Object object =  queryUser(databaseUser0, queryUserFromDatabaseFlow);
+			final Object object =  queryUser(databaseUser0, queryUserFromSalesforceFlow);
 			Assert.assertFalse("Synchronized user should not be null payload", object == null);
 			final Map<String, Object> payload = (Map<String, Object>) object;
 			Assert.assertEquals("The user should have been sync and new name must match", databaseUser0.get(VAR_FIRST_NAME), payload.get(VAR_FIRST_NAME));
