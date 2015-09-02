@@ -98,6 +98,27 @@ payload map {
 
                 
                 <batch:commit size="200" doc:name="Batch Commit">
+                <dw:transform-message doc:name="map SFDC User to DB User">
+                        <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload map {
+	(Id					: $.IdInDB) when $.IdInDB != null,
+	Name 				: $.Name,
+	Username 			: $.Username,
+	FirstName 			: $.FirstName,
+	LastName 			: $.LastName,
+	Alias 				: $.Alias,
+	CommunityNickname 	: $.CommunityNickname,
+	Email 				: $.Email,
+	EmailEncodingKey 	: $.EmailEncodingKey,
+	LanguageLocaleKey 	: $.LanguageLocaleKey,
+	LocaleSidKey 		: $.LocaleSidKey,
+	ProfileId			: $.ProfileId when flowVars.sfdc2dbProfilesMap == false otherwise flowVars.sfdc2dbProfilesMap[($.ProfileId)],
+	TimeZoneSidKey 		: $.TimeZoneSidKey
+}]]></dw:set-payload>
+                    </dw:transform-message>
+                
 
 
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
@@ -117,6 +138,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 #[payload.ProfileId],
 #[payload.CommunityNickname]
 )]]></db:parameterized-query>
+
 
 
 
