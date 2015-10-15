@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule version="EE-3.7.1"
-	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" 
 	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" 
 	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
@@ -64,6 +63,7 @@ payload map {
 	TimeZoneSidKey 		: $.TimeZoneSidKey
 }]]></dw:set-payload>
                     </dw:transform-message>
+                    <logger message="User for Update in Database: #[payload]" level="INFO" doc:name="log user"/>
 
                     <db:update config-ref="Database" bulkMode="true" doc:name="update users in Database">
                         <db:parameterized-query><![CDATA[UPDATE User SET
@@ -89,7 +89,6 @@ payload map {
 
 
                     </db:update>
-                    <logger message="Update Database response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>
             
@@ -118,6 +117,7 @@ payload map {
 	TimeZoneSidKey 		: $.TimeZoneSidKey
 }]]></dw:set-payload>
                     </dw:transform-message>
+                    <logger message="User for Insert to Database: #[payload]" level="INFO" doc:name="log user"/>
                 
 
 
@@ -144,8 +144,6 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 
 
                     </db:insert>
-
-                    <logger message="Insert Database response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step> 
         </batch:process-records>
@@ -166,7 +164,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 
             </batch:step>
 
-            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.util.DateUtils.compareDates(payload.LastModifiedDateInSFDC, payload.LastModifiedDate, '${system.time.zone}') ">
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.util.DateUtils.compareDates(payload.LastModifiedDateInSFDC, payload.LastModifiedDate) ">
 
                 <batch:commit size="200" doc:name="Batch Commit">
                     <dw:transform-message doc:name="map DB User to SFDC User">
@@ -178,6 +176,7 @@ payload map {
 	(Username 			: $.Username) when $.IdInSFDC == null,
 	Name 				: $.Name,
 	FirstName 			: $.FirstName,
+	IsActive			: true,
 	Alias 				: $.Alias,
 	LastName 			: $.LastName,
 	CommunityNickname 	: $.CommunityNickname,
@@ -189,12 +188,13 @@ payload map {
 	TimeZoneSidKey 		: $.TimeZoneSidKey
 }]]></dw:set-payload>
                     </dw:transform-message>
+                    <logger message="User for Upsert in Salesforce: #[payload]" level="INFO" doc:name="log user"/>
 
 
                      <sfdc:upsert config-ref="Salesforce" externalIdFieldName="Id" type="User" doc:name="upsert user in Salesforce"> 
                          <sfdc:objects ref="#[payload]"/> 
-                     </sfdc:upsert> 
-                    <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log response"/> 
+                     </sfdc:upsert>
+ 
                 </batch:commit>
             </batch:step>
             

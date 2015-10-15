@@ -35,7 +35,7 @@ public class MySQLDbCreator {
 		}
 		final String user = props.getProperty("database.user");
 		final String password = props.getProperty("database.password");
-		final String dbUrl = props.getProperty("database.url");
+		final String dbUrl = props.getProperty("db.jdbcUrl");
 		
 		this.databaseName = databaseName;
 		this.pathToSqlScript = pathToSqlScript;
@@ -77,7 +77,7 @@ public class MySQLDbCreator {
 			stmt.addBatch(createStatement.toString());
 			in.close();
 			stmt.executeBatch();
-			LOG.info("Success");
+			LOG.info("Database '" + databaseName + "' created");
 			
 		} catch (SQLException ex) {
 		    // handle any errors

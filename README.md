@@ -33,10 +33,10 @@ I want to have my users synchronized between Salesforce and Database organizatio
 Let's say we want to keep Salesforce synchronized with Database. Then, the integration behavior can be summarized just with the following steps:
 
 1. Ask Salesforce:
-> *Which changes have there been since the last time I got in touch with you?*
+	> *Which changes have there been since the last time I got in touch with you?*
 
 2. For each of the updates fetched in the previous step (1.), ask Database:
-> *Does the update received from A should be applied?*
+	> *Does the update received from A should be applied?*
 
 3. If Database answer for the previous question (2.) is *Yes*, then *upsert* (create or update depending each particular case) Database with the belonging change
 
@@ -45,7 +45,7 @@ Let's say we want to keep Salesforce synchronized with Database. Then, the integ
  Repeat *ad infinitum*:
 
 5. Ask Salesforce:
-> *Which changes have there been since the question I've made in the step 1.?*
+	> *Which changes have there been since the question I've made in the step 1.?*
 
 And so on...
   
@@ -53,7 +53,7 @@ The question for recent changes since a certain moment is nothing but a [poller]
 
 # Considerations <a name="considerations"/>
 
-**Note:** This particular Anypoint Template illustrate the synchronization use case between SalesForce and a Database, thus it requires a DB instance to work.
+**Note:** This particular Anypoint Template illustrate the synchronization use case between Salesforce and a Database, thus it requires a DB instance to work.
 The Anypoint Template comes packaged with a SQL script to create the DB table that it uses. 
 It is the user responsibility to use that script to create the table in an available schema and change the configuration accordingly.
 The SQL script file can be found in [src/main/resources/sfdc2jdbc.sql](../master/src/main/resources/sfdc2jdbc.sql)
@@ -67,8 +67,8 @@ This template is customized for MySQL. To use it with different SQL implementati
 
 There are a couple of things you should take into account before running this template:
 
-1. **Users cannot be deleted in SalesForce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
-2. **Each user needs to be associated to a Profile:** SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. Each SalesForce account has its own profiles. Check out the next section to define a map between Profile Ids (from the source account to the ones in the target account and the other way around).
+1. **Users cannot be deleted in Salesforce:** For now, the only thing to do regarding users removal is disabling/deactivating them, but this won't make the username available for a new user.
+2. **Each user needs to be associated to a Profile:** Salesforce's profiles are what define the permissions the user will have for manipulating data and other users. Each Salesforce account has its own profiles. Check out the next section to define a map between Profile Ids (from the source account to the ones in the target account and the other way around).
 
 ## DB Considerations <a name="dbconsiderations"/>
 
@@ -191,7 +191,7 @@ This are the milliseconds (also different time units can be used) that will run 
 + page.size `200`
 
 
-### SalesForce Connector configuration
+### Salesforce Connector configuration
 + sfdc.username `jorge.drexler@mail.com`
 + sfdc.password `Noctiluca123`
 + sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
@@ -199,11 +199,12 @@ This are the milliseconds (also different time units can be used) that will run 
 + sfdc.integration.user.id `005n0000000T3QkAAK`
 + sfdc.watermark.default.expression `2015-08-25T11:00:00.000Z`  
 This property is an important one, as it configures what should be the start point of the synchronization. The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC](https://help.salesforce.com/HTViewSolution?id=000004680&language=en_US)
++ sfdc.user.profile.id `00e200157815oKFAAY`
 
-### Database Connector configuration for
+### Database Connector configuration
 + db.jdbcUrl `jdbc:mysql://localhost:3306/mule?user=mule&password=mule`
 + db.integration.user.id `mule@localhost`
-+ db.watermark.default.expression `2015-08-25 11:00:00.000` 
++ db.watermark.default.expression `2015-08-25 11:00:00` 
 This property is an important one, as it configures what should be the start point of the synchronization. 
 
 

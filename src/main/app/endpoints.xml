@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule version="EE-3.7.1"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" 
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
 	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 

@@ -18,9 +18,9 @@ import org.joda.time.DateTime;
  */
 public class DateUtils {
 	
-	public static boolean compareDates(String sfdc, Timestamp dbTimeStamp, String offset){
-		DateTime dbDateTime = org.mule.templates.date.DateUtils.dateToDateTime(dbTimeStamp).plusHours(Integer.parseInt(offset.split(":")[0]));
-		DateTime sfdcDateTime = org.mule.templates.date.DateUtils.ISOStringDateToDateTime(sfdc);		
+	public static boolean compareDates(String sfdc, Timestamp dbTimeStamp){
+		DateTime dbDateTime = org.mule.templates.date.DateUtils.dateToDateTimeUsingProvidedOffset(dbTimeStamp, "UTC");
+		DateTime sfdcDateTime = org.mule.templates.date.DateUtils.ISOStringDateToDateTime(sfdc);
 		return dbDateTime.isAfter(sfdcDateTime);
 	}
 	
