@@ -3,4 +3,5 @@
     <name>template-sfdc2db-user-bidirectional-sync-1.2.4-SNAPSHOT</name>
     <description></description>
     <muleExtension name="Salesforce" qualifier="org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
+    <muleExtension name="Synchronize" qualifier="org.mule.tooling.ui.contribution.mule-synchronize"/>
 </mule-project>

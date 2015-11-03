@@ -26,7 +26,7 @@ public class MySQLDbCreator {
 	private String databaseWithNameUrl;
 	private String pathToSqlScript;
 	
-	public MySQLDbCreator(String databaseName, String pathToSqlScript, String pathToProperties){
+	public MySQLDbCreator(String pathToSqlScript, String pathToProperties){
 		final Properties props = new Properties();
 		try {
 			props.load(new FileInputStream(pathToProperties));
@@ -35,9 +35,9 @@ public class MySQLDbCreator {
 		}
 		final String user = props.getProperty("database.user");
 		final String password = props.getProperty("database.password");
-		final String dbUrl = props.getProperty("db.jdbcUrl");
+		final String dbUrl = props.getProperty("database.jdbcUrl");
 		
-		this.databaseName = databaseName;
+		this.databaseName = props.getProperty("database.name");
 		this.pathToSqlScript = pathToSqlScript;
 		this.databaseUrl = dbUrl+"?user="+user+"&password="+password;
 		this.databaseWithNameUrl = dbUrl+databaseName+"?rewriteBatchedStatements=true&user="+user+"&password="+password;
