@@ -4,13 +4,13 @@
 	<parent>
 		<groupId>org.mule.templates</groupId>
 		<artifactId>templates-tooling-parent-pom</artifactId>
-		<version>1.2.3</version>
+		<version>1.2.6</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>template-sfdc2db-user-bidirectional-sync</artifactId>
 	<packaging>mule</packaging>
-	<version>1.2.4-SNAPSHOT</version>
+	<version>1.2.5-SNAPSHOT</version>
 	<name>template-sfdc2db-user-bidirectional-sync Mule Anypoint Template Project</name>
 
 	<scm>
@@ -39,6 +39,10 @@
                     <inclusion>
                             <groupId>org.mule.modules</groupId>
                             <artifactId>mule-module-extensions-spring-support</artifactId>
+                        </inclusion>
+                    <inclusion>
+                            <groupId>com.mulesoft.munit.utils</groupId>
+                            <artifactId>munit-dbserver-module</artifactId>
                         </inclusion>
                     </inclusions>
 				</configuration>
@@ -116,6 +120,22 @@
             <version>${munit.version}</version>
             <scope>test</scope>
         </dependency>
+	<dependency>
+		<groupId>com.mulesoft.munit.utils</groupId>
+		<artifactId>munit-synchronize-module</artifactId>
+		<version>1.0.0</version>
+	</dependency>
+	<dependency>
+		<groupId>com.mulesoft.munit.utils</groupId>
+		<artifactId>dbserver</artifactId>
+		<version>1.1.0</version>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>com.mulesoft.munit.utils</groupId>
+		<artifactId>munit-dbserver-module</artifactId>
+		<version>1.1.0-SNAPSHOT</version>
+	</dependency>
     <dependency>
             <groupId>org.mule.modules</groupId>
             <artifactId>mule-module-extensions-support</artifactId>
