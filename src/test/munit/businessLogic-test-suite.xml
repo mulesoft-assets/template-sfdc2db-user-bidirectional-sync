@@ -63,7 +63,12 @@ payload - "Id" - "type"]]></dw:set-payload>
         <dbserver:stop-db-server config-ref="DB_Server" doc:name="DB Server"/>
     </munit:after-suite>
     <munit:before-test name="businessLogic-test-suiteBefore_Test" description="Before tests actions">
-        <set-variable variableName="timestamp" value="#[java.lang.System.currentTimeMillis()]" doc:name="generate timestamp"/>
+        <dw:transform-message doc:name="generate timestamp">
+            <dw:set-variable variableName="timestamp"><![CDATA[%dw 1.0
+%output application/java
+---
+now as :string {format: 'yyMMddHHmmss'}]]></dw:set-variable>
+        </dw:transform-message>
     </munit:before-test>
     
     
