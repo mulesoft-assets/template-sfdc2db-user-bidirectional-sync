@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dbserver="http://www.mulesoft.org/schema/mule/dbserver" xmlns:synchronize="http://www.mulesoft.org/schema/mule/synchronize" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
+	 xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/synchronize http://www.mulesoft.org/schema/mule/synchronize/current/mule-synchronize.xsd
+http://www.mulesoft.org/schema/mule/dbserver http://www.mulesoft.org/schema/mule/dbserver/current/mule-dbserver.xsd">
+    <munit:config name="munit" mock-inbounds="false" mock-connectors="false" doc:name="MUnit configuration"/>
+	<dbserver:config  name="DB_Server" database="${database.name}" sqlFile="User.sql" doc:name="DB Server"/>
+	
+    <spring:beans>
+        <spring:import resource="classpath:businessLogic.xml"/>
+        <spring:import resource="classpath:config.xml"/>
+        <spring:import resource="classpath:errorHandling.xml"/>
+    </spring:beans>
+    
+    <sub-flow name="getUsersDatabase-suiteFlow">
+        <logger message="get users from database..." level="INFO" doc:name="get User from database Flow"/>
+        <enricher source="#[payload.isEmpty() ? NullPayload.getInstance() : payload[0]]" target="#[payload]" doc:name="Message Enricher">
+            <dbserver:execute-query config-ref="DB_Server" sql="SELECT Email, FirstName, LastName, Username FROM User WHERE Email = '#[flowVars.EmailVar.EMAIL]'" doc:name="query user from Database"/>
+        </enricher>
+
+        <logger message="Query user from database result : #[payload]" level="INFO" doc:name="log result"/>
+    </sub-flow>
+    <sub-flow name="getUsersSalesforce-suiteFlow">
+        <logger message="get users from Salesforce..." level="INFO" doc:name="get User from Salesforce Flow"/>
+        <dw:transform-message doc:name="prepare User">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	Email: p('db.testuser.email')
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <sfdc:query-single config-ref="Salesforce" query="dsql:SELECT Email, FirstName, LastName FROM User WHERE Email = '#[payload.Email]' and IsActive = true" doc:name="query user from Salesforce"/>
+        <dw:transform-message doc:name="Remove unnecessary fields">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload - "Id" - "type"]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="Query user from Salesforce result : #[payload]" level="INFO" doc:name="log result"/>
+    </sub-flow>
+    <sub-flow name="insertToDatabase-suiteSub_Flow">
+        <logger message="Insert user with email '#[flowVars.EmailVar]' to DB" level="INFO" doc:name="insert user to database Flow"/>
+        <dbserver:execute config-ref="DB_Server" sql="INSERT INTO User (Email, FirstName, LastName, Username, ProfileId) VALUES ('#[flowVars.EmailVar]', 'FirstName', 'LastName', 'Username', 'ProfileId')" doc:name="insert test user to DB"/>
+        <logger message="Insert test user to DB result: #[payload]" level="INFO" doc:name="log result"/>
+    </sub-flow>
+
+    
+    <munit:before-suite name="businessLogic-test-suiteBefore" description="Before suite actions">
+		<dbserver:start-db-server config-ref="DB_Server" doc:name="DB Server"/>
+    </munit:before-suite>
+    <munit:after-suite name="businessLogic-test-suiteAfter" description="After suite actions">
+        <dbserver:stop-db-server config-ref="DB_Server" doc:name="DB Server"/>
+    </munit:after-suite>
+    <munit:before-test name="businessLogic-test-suiteBefore_Test" description="Before tests actions">
+        <dw:transform-message doc:name="generate timestamp">
+            <dw:set-variable variableName="timestamp"><![CDATA[%dw 1.0
+%output application/java
+---
+now as :string {format: 'yyMMddHHmmss'}]]></dw:set-variable>
+        </dw:transform-message>
+    </munit:before-test>
+    
+    
+     <munit:test name="businessLogic-test-suite-fromSalesforceToDBBatchInsertTest" description="Test" >
+
+        <logger message="testing fromSalesforceToDBBatch Insert" level="INFO" doc:name="log fromSalesforceToDBBatch Insert"/>
+
+        <dw:transform-message doc:name="prepare Salesforce User">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+[{
+	Email: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@email.com",
+	FirstName : "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
+	LastName : "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp,
+	Username: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@example.com",
+	ProfileId: p('sfdc.user.profile.id'),
+	LastModifiedDate: now as :datetime {class: "java.util.Date"}
+}]]]></dw:set-payload>
+            <dw:set-variable variableName="expectedVar"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	EMAIL: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@email.com",
+	FIRSTNAME : "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
+	LASTNAME : "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp,
+	USERNAME: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@example.com"
+}]]></dw:set-variable>
+            <dw:set-variable variableName="EmailVar"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	EMAIL: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@email.com"
+}]]></dw:set-variable>
+        </dw:transform-message>
+        <set-variable variableName="sfdc2dbProfilesMap" value="#[${from.sfdc.to.db.profilesMap}]" doc:name="load sfdc2db ProfilesMap"/>
+        <synchronize:run-and-wait timeout="10000" doc:name="Synchronize">
+            <batch:execute name="fromSalesforceToDBBatch" doc:name="call fromSalesforceToDBBatch"/>
+        </synchronize:run-and-wait>
+
+        <flow-ref name="getUsersDatabase-suiteFlow" doc:name="getUsersDatabase-suiteFlow"/>
+        <munit:assert-on-equals message="The user should have been sync from Salesforce to database" expectedValue="#[flowVars.expectedVar]" actualValue="#[payload]" doc:name="assert equals"/>
+    </munit:test>
+   
+    <munit:test name="businessLogic-test-suite-fromSalesforceToDBBatchUpdateTest" description="Test">
+        <logger message="testing fromSalesforceToDBBatch Update" level="INFO" doc:name="log fromSalesforceToDBBatch Update"/>
+
+        <flow-ref name="insertToDatabase-suiteSub_Flow" doc:name="insertToDatabase-suiteSub_Flow"/>
+
+        <dw:transform-message doc:name="prepare Salesforce User">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+[{
+	Email: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@email.com",
+	FirstName : "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
+	LastName : "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp,
+	Username: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@example.com",
+	ProfileId: p('sfdc.user.profile.id'),
+	LastModifiedDate: now as :string
+}]]]></dw:set-payload>
+            <dw:set-variable variableName="expectedVar"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	LASTNAME : "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp,
+	USERNAME: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@example.com",
+	FIRSTNAME : "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
+	EMAIL: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@email.com"
+}]]></dw:set-variable>
+            <dw:set-variable variableName="EmailVar"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	EMAIL: "sfdc2db-user-bidi-munit-" ++ flowVars.timestamp ++ "@email.com"
+}]]></dw:set-variable>
+        </dw:transform-message>
+
+        <set-variable variableName="sfdc2dbProfilesMap" value="#[${from.sfdc.to.db.profilesMap}]" doc:name="load sfdc2db ProfilesMap"/>
+        <synchronize:run-and-wait timeout="10000" doc:name="Synchronize">
+            <batch:execute name="fromSalesforceToDBBatch" doc:name="call fromSalesforceToDBBatch"/>
+        </synchronize:run-and-wait>
+
+
+        <flow-ref name="getUsersDatabase-suiteFlow" doc:name="call getUsersDatabase-suiteFlow"/>
+        <munit:assert-on-equals message="The user should have been sync from Salesforce to database" expectedValue="#[flowVars.expectedVar]" actualValue="#[payload]" doc:name="assert equals"/>
+    </munit:test>
+    <munit:test name="businessLogic-test-suite-fromDBToSalesforceBatchTest" description="Test">
+        <logger message="testing fromDBToSalesforceBatch" level="INFO" doc:name="log fromDBToSalesforceBatch"/>
+
+        <dw:transform-message doc:name="prepare database User">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+[{
+	Email: p('db.testuser.email'),
+	FirstName: "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
+	LastName: "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp,
+	ProfileId: p('sfdc.user.profile.id'),
+	LastModifiedDate: now as :datetime {class: "java.util.Date"}
+}]]]></dw:set-payload>
+            <dw:set-variable variableName="expectedVar"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	Email: p('db.testuser.email'),
+	FirstName: "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
+	LastName: "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp
+}]]></dw:set-variable>
+        </dw:transform-message>
+        <set-variable variableName="db2sfdcProfilesMap" value="#[${from.db.to.sfdc.profilesMap}]" doc:name="load db2sfdc ProfilesMap"/>
+        <synchronize:run-and-wait timeout="10000" doc:name="Synchronize">
+            <batch:execute name="fromDBToSalesforceBatch" doc:name="call fromDBToSalesforceBatch"/>
+        </synchronize:run-and-wait>
+        <flow-ref name="getUsersSalesforce-suiteFlow" doc:name="call getUsersSalesforce-suiteFlow"/>
+        <munit:assert-on-equals message="The user should have been sync from database to Salesforce" expectedValue="#[flowVars.expectedVar]" actualValue="#[payload]" doc:name="assert equals"/>
+    </munit:test>
+
+
+</mule>

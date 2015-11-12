@@ -1,5 +1,5 @@
 CREATE TABLE `User` (
-  `Id` varchar(255) NOT NULL,
+  `Id` int NOT NULL AUTO_INCREMENT,
   `AboutMe` text,
   `Alias` varchar(255) DEFAULT NULL,
   `City` varchar(255) DEFAULT NULL,
