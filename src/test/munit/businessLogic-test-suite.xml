@@ -172,7 +172,7 @@ now as :string {format: 'yyMMddHHmmss'}]]></dw:set-variable>
 	FirstName: "sfdc2db-user-bidi-fn-munit-" ++ flowVars.timestamp,
 	LastName: "sfdc2db-user-bidi-ln-munit-" ++ flowVars.timestamp,
 	ProfileId: p('sfdc.user.profile.id'),
-	LastModifiedDate: now >> |+00:00| as :datetime {class: "java.util.Date"}
+	LastModifiedDate: now + |PT24H| as :datetime {class: "java.util.Date"}
 }]]]></dw:set-payload>
             <dw:set-variable variableName="expectedVar"><![CDATA[%dw 1.0
 %output application/java
