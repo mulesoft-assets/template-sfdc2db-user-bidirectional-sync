@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:dbserver="http://www.mulesoft.org/schema/mule/dbserver" xmlns:synchronize="http://www.mulesoft.org/schema/mule/synchronize" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
+<mule xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:dbserver="http://www.mulesoft.org/schema/mule/dbserver" xmlns:synchronize="http://www.mulesoft.org/schema/mule/synchronize" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
 	 xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans"
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+	xsi:schemaLocation="
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
@@ -13,6 +15,8 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/synchronize http://www.mulesoft.org/schema/mule/synchronize/current/mule-synchronize.xsd
 http://www.mulesoft.org/schema/mule/dbserver http://www.mulesoft.org/schema/mule/dbserver/current/mule-dbserver.xsd">
+
+	<context:property-placeholder location="mule.test.properties"/>
     <munit:config name="munit" mock-inbounds="false" mock-connectors="false" doc:name="MUnit configuration"/>
 	<dbserver:config  name="DB_Server" database="${database.name}" sqlFile="User.sql" doc:name="DB Server"/>
 	

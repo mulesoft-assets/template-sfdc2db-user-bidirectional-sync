@@ -123,18 +123,14 @@
 	<dependency>
 		<groupId>com.mulesoft.munit.utils</groupId>
 		<artifactId>munit-synchronize-module</artifactId>
-		<version>1.0.0</version>
-	</dependency>
-	<dependency>
-		<groupId>com.mulesoft.munit.utils</groupId>
-		<artifactId>dbserver</artifactId>
-		<version>1.1.0</version>
+		<version>${munit.version}</version>
 		<scope>test</scope>
 	</dependency>
 	<dependency>
 		<groupId>com.mulesoft.munit.utils</groupId>
 		<artifactId>munit-dbserver-module</artifactId>
-		<version>1.1.0-SNAPSHOT</version>
+		<version>${munit.version}</version>
+		<scope>test</scope>
 	</dependency>
     <dependency>
             <groupId>org.mule.modules</groupId>
@@ -153,12 +149,6 @@
 			<id>mulesoft-releases</id>
 			<name>MuleSoft Releases Repository</name>
 			<url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
-			<layout>default</layout>
-		</repository>
-		<repository>
-			<id>mule-ee-releases</id>
-			<name>MuleSoft Releases EE Repository</name>
-			<url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
 			<layout>default</layout>
 		</repository>
 		<repository>

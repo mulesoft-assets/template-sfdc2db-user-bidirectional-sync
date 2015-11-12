@@ -62,7 +62,7 @@ This template is customized for MySQL. To use it with different SQL implementati
 
 * update SQL script dialect to desired one
 * replace MySQL driver library dependency to desired one in [POM](pom.xml)
-* replace attribute `driverClassName` of `db:generic-config` element with class name of desired JDBC driver in [src/main/app/config.xml](../master/src/main/app/config.xml)
+* set property `db.driver` used in `db:generic-config` element with class name of desired JDBC driver in [src/main/app/config.xml](../master/src/main/app/config.xml)
 * update JDBC URL in `mule.*.properties` file
 
 There are a couple of things you should take into account before running this template:
@@ -187,7 +187,7 @@ Mule Studio provides you with really easy way to deploy your Template directly t
 In order to use this Mule Anypoint Template you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 ### Application configuration
 + poll.frequencyMillis `10000`  
-This are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
+These are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
 + page.size `200`
 
 
@@ -197,14 +197,15 @@ This are the milliseconds (also different time units can be used) that will run 
 + sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
 + sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.integration.user.id `005n0000000T3QkAAK`
-+ sfdc.watermark.default.expression `2015-08-25T11:00:00.000Z`  
++ sfdc.watermark.default.expression `2015-11-04T11:00:00.000Z`  
 This property is an important one, as it configures what should be the start point of the synchronization. The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC](https://help.salesforce.com/HTViewSolution?id=000004680&language=en_US)
 + sfdc.user.profile.id `00e200157815oKFAAY`
 
 ### Database Connector configuration
 + db.jdbcUrl `jdbc:mysql://localhost:3306/mule?user=mule&password=mule`
++ db.driver `com.mysql.jdbc.Driver`
 + db.integration.user.id `mule@localhost`
-+ db.watermark.default.expression `2015-08-25 11:00:00` 
++ db.watermark.default.expression `2015-11-04 11:00:00` 
 This property is an important one, as it configures what should be the start point of the synchronization. 
 
 

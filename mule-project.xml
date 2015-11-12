@@ -5,4 +5,5 @@
     <muleExtension name="Salesforce" qualifier="org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
     <muleExtension name="Synchronize" qualifier="org.mule.tooling.ui.contribution.mule-synchronize"/>
     <muleExtension name="DB Server" qualifier="org.mule.tooling.ui.contribution.dbserver.3.4.0"/>
+    <muleExtension name="Munit" qualifier="org.mule.tooling.ui.contribution.munit"/>
 </mule-project>
