@@ -44,6 +44,10 @@
                             <groupId>com.mulesoft.munit.utils</groupId>
                             <artifactId>munit-dbserver-module</artifactId>
                         </inclusion>
+                    <inclusion>
+                            <groupId>com.mulesoft.munit.utils</groupId>
+                            <artifactId>munit-synchronize-module</artifactId>
+                        </inclusion>
                     </inclusions>
 				</configuration>
 			</plugin>
@@ -122,12 +126,6 @@
         </dependency>
 	<dependency>
 		<groupId>com.mulesoft.munit.utils</groupId>
-		<artifactId>munit-synchronize-module</artifactId>
-		<version>${munit.version}</version>
-		<scope>test</scope>
-	</dependency>
-	<dependency>
-		<groupId>com.mulesoft.munit.utils</groupId>
 		<artifactId>munit-dbserver-module</artifactId>
 		<version>${munit.version}</version>
 		<scope>test</scope>
@@ -141,6 +139,12 @@
             <groupId>org.mule.modules</groupId>
             <artifactId>mule-module-extensions-spring-support</artifactId>
             <version>${mule.version}</version>
+        </dependency>
+    <dependency>
+            <groupId>com.mulesoft.munit.utils</groupId>
+            <artifactId>munit-synchronize-module</artifactId>
+            <version>${munit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

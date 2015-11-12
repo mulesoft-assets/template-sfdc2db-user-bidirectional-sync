@@ -6,8 +6,8 @@
 	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans"
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
-http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+	xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
@@ -187,6 +187,8 @@ now as :string {format: 'yyMMddHHmmss'}]]></dw:set-variable>
         <synchronize:run-and-wait timeout="10000" doc:name="Synchronize">
             <batch:execute name="fromDBToSalesforceBatch" doc:name="call fromDBToSalesforceBatch"/>
         </synchronize:run-and-wait>
+        <expression-component doc:name="wait before an assertion"><![CDATA[// wait 20s before assertion
+Thread.sleep(20000);]]></expression-component>
         <flow-ref name="getUsersSalesforce-suiteFlow" doc:name="call getUsersSalesforce-suiteFlow"/>
         <munit:assert-on-equals message="The user should have been sync from database to Salesforce" expectedValue="#[flowVars.expectedVar]" actualValue="#[payload]" doc:name="assert equals"/>
     </munit:test>

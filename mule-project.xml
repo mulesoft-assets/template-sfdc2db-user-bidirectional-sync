@@ -2,8 +2,8 @@
 <mule-project xmlns="http://www.mulesoft.com/tooling/project" runtimeId="org.mule.tooling.server.3.7.2.ee" schemaVersion="3.5.0.0">
     <name>template-sfdc2db-user-bidirectional-sync-1.2.5-SNAPSHOT</name>
     <description></description>
+    <muleExtension name="Munit" qualifier="org.mule.tooling.ui.contribution.munit"/>
     <muleExtension name="Salesforce" qualifier="org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
     <muleExtension name="Synchronize" qualifier="org.mule.tooling.ui.contribution.mule-synchronize"/>
     <muleExtension name="DB Server" qualifier="org.mule.tooling.ui.contribution.dbserver.3.4.0"/>
-    <muleExtension name="Munit" qualifier="org.mule.tooling.ui.contribution.munit"/>
 </mule-project>
