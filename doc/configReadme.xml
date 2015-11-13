@@ -29,6 +29,8 @@ Let's say we want to keep Salesforce synchronized with Database. Then, the integ
 And so on...
   
 The question for recent changes since a certain moment is nothing but a [poller](https://developer.mulesoft.com/docs/display/current/Poll+Reference) with a watermark defined.
+
+The template is covered by the integration tests using the [MUnit](https://docs.mulesoft.com/mule-user-guide/v/3.7/munit)
 		</section>
 		<section id="considerations">
 <![CDATA[
