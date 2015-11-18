@@ -59,7 +59,7 @@ src/main/app/test-flows.xml
 # --------------------------------------- #
 # Test credentials to be use locally only #
 # --------------------------------------- #
-src/test/resources/mule.test.properties
+# src/test/resources/mule.test.properties
 src/main/resources/mule.test.properties
 
 # ------------ #

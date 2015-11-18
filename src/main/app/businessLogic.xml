@@ -26,7 +26,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
  
                 <enricher   doc:name="save Id and LastModifiedDate to payload">
                     <db:select config-ref="Database" doc:name="query user from Database">
-                        <db:parameterized-query><![CDATA[SELECT * FROM User WHERE Email = #[payload.Email]]]></db:parameterized-query>
+                        <db:parameterized-query><![CDATA[SELECT Id, LastModifiedDate FROM User WHERE Email = #[payload.Email]]]></db:parameterized-query>
 
 
 
@@ -122,9 +122,8 @@ payload map {
 
 
                     <db:insert config-ref="Database" bulkMode="true" doc:name="insert users to Database">
-                        <db:parameterized-query><![CDATA[INSERT INTO User(Id,Alias,Email,EmailEncodingKey,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,TimeZoneSidKey,Username,ProfileId,CommunityNickname)
-VALUES(
-UUID(),	
+                        <db:parameterized-query><![CDATA[INSERT INTO User(Alias,Email,EmailEncodingKey,FirstName,LanguageLocaleKey,LastModifiedById,LastModifiedDate,LastName,LocaleSidKey,TimeZoneSidKey,Username,ProfileId,CommunityNickname)
+VALUES(	
 #[payload.Alias],
 #[payload.Email],
 #[payload.EmailEncodingKey],
