@@ -232,7 +232,7 @@ Each SalesForce account has its own profiles.
 + from.db.to.sfdc.profilesMap `false`
 
 Database Connector configuration for testing
-database.name `DATABASE_NAME`
++ database.name `DATABASE_NAME`
 
 # API Calls <a name="apicalls"/>
 Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The Anypoint Template calls to the API can be calculated using the formula:

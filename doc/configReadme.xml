@@ -98,7 +98,7 @@ Each SalesForce account has its own profiles.
 + from.db.to.sfdc.profilesMap `false`
 
 Database Connector configuration for testing
-database.name `DATABASE_NAME`
++ database.name `DATABASE_NAME`
 ]]>
 		</section>
 		<section id="api_calls">
