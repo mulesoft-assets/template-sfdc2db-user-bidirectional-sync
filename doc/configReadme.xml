@@ -30,7 +30,7 @@ And so on...
   
 The question for recent changes since a certain moment is nothing but a [poller](https://developer.mulesoft.com/docs/display/current/Poll+Reference) with a watermark defined.
 
-The template is covered by the integration tests using the [MUnit](https://docs.mulesoft.com/mule-user-guide/v/3.7/munit)
+The template is covered by the integration tests using the [MUnit](https://docs.mulesoft.com/mule-user-guide/v/3.7/munit). To be able to run the tests, see the example configuration of the test property file. 
 		</section>
 		<section id="considerations">
 <![CDATA[
@@ -58,7 +58,6 @@ There are a couple of things you should take into account before running this te
 These are the milliseconds (also different time units can be used) that will run between two different checks for updates in Salesforce and Database
 + page.size `200`
 
-
 ### Salesforce Connector configuration
 + sfdc.username `jorge.drexler@mail.com`
 + sfdc.password `Noctiluca123`
@@ -76,10 +75,30 @@ This property is an important one, as it configures what should be the start poi
 + db.watermark.default.expression `2015-11-04 11:00:00` 
 This property is an important one, as it configures what should be the start point of the synchronization. 
 
-
 + from.sfdc.to.db.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 + from.db.to.sfdc.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 The meaning of the properties above is defined in the second consideration on [the previous section](#afewconsiderations)
+
+### Munit configuration
+Salesforce Connector configuration
++ sfdc.username `denis.mallki@mail.com`
++ sfdc.password `daLLk12m9`
++ sfdc.securityToken `2x59pklDdYWlWfqaPM9z1xHWG`
++ sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
+
+Database Connector configuration
++ db.jdbcUrl `jdbc:h2:mem:DATABASE_NAME;AUTOCOMMIT=ON;MODE=MySQL;USER=;PASSWORD=`
++ db.driver `org.h2.Driver`
++ db.testuser.email `test@gmail.com`
+
+SalesForce's profiles are what define the permissions the user will have for manipulating data and other users. 
+Each SalesForce account has its own profiles.
++ sfdc.user.profile.id `00a300000016oKFAAY`
++ from.sfdc.to.db.profilesMap `false`
++ from.db.to.sfdc.profilesMap `false`
+
+Database Connector configuration for testing
+database.name `DATABASE_NAME`
 ]]>
 		</section>
 		<section id="api_calls">
