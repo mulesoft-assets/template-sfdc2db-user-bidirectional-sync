@@ -79,7 +79,7 @@ This property is an important one, as it configures what should be the start poi
 + from.db.to.sfdc.profilesMap `['00r80000001CEiGAAW': '00e80000110CDfGMAX','00e30000000ifQyAAI': '00q70000000fiQyEZI']`  
 The meaning of the properties above is defined in the second consideration on [the previous section](#afewconsiderations)
 
-### Munit configuration
+### MUnit configuration
 Salesforce Connector configuration
 + sfdc.username `denis.mallki@mail.com`
 + sfdc.password `daLLk12m9`
