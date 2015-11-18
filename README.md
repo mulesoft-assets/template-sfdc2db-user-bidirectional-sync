@@ -51,6 +51,8 @@ And so on...
   
 The question for recent changes since a certain moment is nothing but a [poller](https://developer.mulesoft.com/docs/display/current/Poll+Reference) with a watermark defined.
 
+The template is covered by the integration tests using the [MUnit](https://docs.mulesoft.com/mule-user-guide/v/3.7/munit)
+
 # Considerations <a name="considerations"/>
 
 **Note:** This particular Anypoint Template illustrate the synchronization use case between Salesforce and a Database, thus it requires a DB instance to work.
