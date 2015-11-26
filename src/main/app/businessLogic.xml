@@ -39,7 +39,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
             </batch:step>
 
             
-            <batch:step name="updateUsersInDatabaseStep" accept-expression="payload.IdInDB != null &amp;&amp; org.mule.templates.date.DateUtils.ISOStringDateToDateTime(payload.LastModifiedDate).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(payload.LastModifiedDateInDB))">
+            <batch:step name="updateUsersInDatabaseStep" accept-expression="payload.IdInDB != null &amp;&amp; (new org.joda.time.DateTime(payload.LastModifiedDate)).isAfter(org.mule.templates.date.DateUtils.dateToDateTime(payload.LastModifiedDateInDB))">
  
  
                 <batch:commit size="200" doc:name="Batch Commit">
@@ -163,7 +163,7 @@ CURRENT_USER,CURRENT_TIMESTAMP,
 
             </batch:step>
 
-            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.util.DateUtils.compareDates(payload.LastModifiedDateInSFDC, payload.LastModifiedDate) ">
+            <batch:step name="upsertUserInSalesforceStep" accept-expression="payload.IdInSFDC == null ? true : org.mule.templates.date.DateUtils.dateToDateTimeUsingProvidedOffset(payload.LastModifiedDate,&quot;UTC&quot;).isAfter(new org.joda.time.DateTime(payload.LastModifiedDateInSFDC))">
 
                 <batch:commit size="200" doc:name="Batch Commit">
                     <dw:transform-message doc:name="map DB User to SFDC User">

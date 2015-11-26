@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>template-sfdc2db-user-bidirectional-sync</artifactId>
 	<packaging>mule</packaging>
-	<version>1.2.6-SNAPSHOT</version>
+	<version>1.2.7</version>
 	<name>template-sfdc2db-user-bidirectional-sync Mule Anypoint Template Project</name>
 
 	<scm>
