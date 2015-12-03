@@ -184,7 +184,7 @@ now as :string {format: 'yyMMddHHmmss'}]]></dw:set-variable>
 }]]></dw:set-variable>
         </dw:transform-message>
         <set-variable variableName="db2sfdcProfilesMap" value="#[${from.db.to.sfdc.profilesMap}]" doc:name="load db2sfdc ProfilesMap"/>
-        <synchronize:run-and-wait timeout="10000" doc:name="Synchronize">
+        <synchronize:run-and-wait timeout="60000" doc:name="Synchronize">
             <batch:execute name="fromDBToSalesforceBatch" doc:name="call fromDBToSalesforceBatch"/>
         </synchronize:run-and-wait>
         <flow-ref name="getUsersSalesforce-suiteFlow" doc:name="call getUsersSalesforce-suiteFlow"/>
