@@ -198,6 +198,9 @@ These are the milliseconds (also different time units can be used) that will run
 + sfdc.securityToken `avsfwCUl7apQs56Xq2AKi3X`
 + sfdc.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.integration.user.id `005n0000000T3QkAAK`
+
+	**Note:** To find out the correct *sfdc.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
+
 + sfdc.watermark.default.expression `2015-11-04T11:00:00.000Z`  
 This property is an important one, as it configures what should be the start point of the synchronization. The date format accepted in SFDC Query Language is either *YYYY-MM-DDThh:mm:ss+hh:mm* or you can use Constants. [More information about Dates in SFDC](https://help.salesforce.com/HTViewSolution?id=000004680&language=en_US)
 + sfdc.user.profile.id `00e200157815oKFAAY`
