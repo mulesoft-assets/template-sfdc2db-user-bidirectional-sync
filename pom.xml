@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.mule.templates</groupId>
 		<artifactId>templates-tooling-parent-pom</artifactId>
-		<version>1.3.6</version>
+		<version>1.3.7</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -127,7 +127,7 @@
 	<dependency>
 		<groupId>com.mulesoft.munit.utils</groupId>
 		<artifactId>munit-dbserver-module</artifactId>
-		<version>${munit.version}</version>
+		<version>${munit.utils.version}</version>
 		<scope>test</scope>
 	</dependency>
     <dependency>
@@ -143,7 +143,7 @@
     <dependency>
             <groupId>com.mulesoft.munit.utils</groupId>
             <artifactId>munit-synchronize-module</artifactId>
-            <version>${munit.version}</version>
+            <version>${munit.utils.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
