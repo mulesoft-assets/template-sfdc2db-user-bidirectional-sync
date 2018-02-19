@@ -33,7 +33,7 @@ The question for recent changes since a certain moment is nothing but a schedule
 		</section>
 		<section id="considerations">
 <![CDATA[
-**Note:** This particular Anypoint Template illustrate the synchronization use case between Salesforce and a Database, thus it requires a DB instance to work.
+**Note:** This particular Anypoint Template illustrates the synchronization use case between Salesforce and a Database, thus it requires a DB instance to work.
 The Anypoint Template comes packaged with a SQL script to create the DB table that it uses. 
 It is the user responsibility to use that script to create the table in an available schema and change the configuration accordingly.
 The SQL script file can be found in [src/main/resources/User.sql](../master/src/main/resources/User.sql)
