@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<munit:config name="new-test-suite.xml" />
+	<configuration-properties doc:name="Configuration properties" file="mule.${mule.env}.properties" />
+	<configuration-properties doc:name="Configuration properties" file="common.properties" />
+	<configuration-properties doc:name="Configuration properties" file="mule-artifact.properties" />
+	
+	<configuration-properties doc:name="Configuration properties" doc:id="89d4bd0f-c5e1-4b44-ad76-4d12760a00f9" file="mule.test.properties" />
+	<munit:before-test name="test-suiteBefore_Test" description="Before tests actions" >
+      <salesforce:query doc:name="Select existed Users" doc:id="55388bd7-5ccc-498b-a241-18df8d446bc0" config-ref="Salesforce_Sfdc_config" target="sfdcUser">
+			<salesforce:salesforce-query >SELECT Alias, EmailEncodingKey, LanguageLocaleKey, LocaleSidKey, TimeZoneSidKey, CommunityNickname, ProfileId, Username, FirstName, LastName, Id, Email From User WHERE Email IN  ('${email.user1}', '${email.user2}')</salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Prepare users for Salesforce" doc:id="3ff3e9f5-b020-4faf-8e6d-847325c10443" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="updatedUsers" ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	Id: vars.sfdcUser[0].Id,
+	Username: vars.sfdcUser[0].Username,
+	Email : vars.sfdcUser[0].Email,
+	FirstName : "MUnit" ++ randomInt(100000),
+	LastName: vars.sfdcUser[0].LastName
+},
+{
+	Id: vars.sfdcUser[1].Id,
+	Username: vars.sfdcUser[1].Username,
+	Email : vars.sfdcUser[1].Email,
+	FirstName : "MUnit" ++ randomInt(100000),
+	LastName: vars.sfdcUser[1].LastName
+}]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:update doc:name="Update users in Salesforce" doc:id="af009fb6-6355-46cf-90c2-78bffa00a517" config-ref="Salesforce_Sfdc_config" type="User">
+			<salesforce:records ><![CDATA[#[vars.updatedUsers]]]></salesforce:records>
+		</salesforce:update>
+		<ee:transform doc:name="Prepare user for Database" doc:id="df382cd7-6599-41b6-8758-c4603f092d42">
+         <ee:message>
+         </ee:message>
+         <ee:variables>
+				<ee:set-variable variableName="dbUser" ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	ProfileId: vars.sfdcUser[0].ProfileId, 
+	Username: vars.sfdcUser[0].Username,
+	Email : vars.sfdcUser[0].Email,
+	FirstName : "MUnit" ++ randomInt(100000),
+	LastName: vars.sfdcUser[0].LastName,
+	Alias: vars.sfdcUser[0].Alias,
+	EmailEncodingKey: vars.sfdcUser[0].EmailEncodingKey, 
+	LanguageLocaleKey: vars.sfdcUser[0].LanguageLocaleKey, 
+	LocaleSidKey: vars.sfdcUser[0].LocaleSidKey, 
+	TimeZoneSidKey: vars.sfdcUser[0].TimeZoneSidKey, 
+	CommunityNickname: vars.sfdcUser[0].CommunityNickname 
+}
+]]></ee:set-variable>
+         </ee:variables>
+      </ee:transform>
+		<db:insert doc:name="Insert user to Database" doc:id="2b48f1e0-a0c7-4fa7-9fd7-151dc8ab52e7" config-ref="Database_Config">
+			<db:sql >INSERT INTO User (
+								ProfileId,
+								Username,
+								Email,
+								FirstName,
+								LastName,								
+								LastModifiedDate,
+								LastModifiedById,
+								Alias, 
+								EmailEncodingKey, 
+								LanguageLocaleKey, 
+								LocaleSidKey, 
+								TimeZoneSidKey, 
+								CommunityNickname 
+							) VALUES (
+								:ProfileId,
+								:Username,
+								:Email,
+								:FirstName,
+								:LastName,
+								CURRENT_TIMESTAMP(),
+								CURRENT_USER(),
+								:Alias, 
+								:EmailEncodingKey, 
+								:LanguageLocaleKey, 
+								:LocaleSidKey, 
+								:TimeZoneSidKey, 
+								:CommunityNickname 
+								)</db:sql>
+			<db:input-parameters ><![CDATA[#[vars.dbUser]]]></db:input-parameters>
+		</db:insert>
+	</munit:before-test>
+	<munit:test name="test-suite-sfdcQueryFlowTest" description="Test" doc:id="6332c58f-ba5b-451a-8ca7-8d677e31fa9d" >
+		<munit:execution >
+			<scripting:execute doc:name="Sleep for 10s before we start tests" doc:id="68f96218-bb52-4fbc-92c8-1b014988e3e2" engine="groovy">
+				<scripting:code >sleep(10000)</scripting:code>
+			</scripting:execute>
+			<set-variable value="#['${from.sfdc.to.db.profilesMap}']" doc:name="Set Variable sfdc2dbProfilesMap" doc:id="3fe8bdca-3549-4893-a02a-c55450d08a8c" variableName="sfdc2dbProfilesMap"/>
+			<flow-ref doc:name="querySalesforceFlow" doc:id="e0479714-bce3-4ea8-9fbc-1c8ed7b5d185" name="querySalesforceFlow"/>
+			<flow-ref doc:name="syncFromSalesforceToDatabase" doc:id="5592c1fa-6dc8-4956-b894-e0e2b025918f" name="syncFromSalesforceToDatabase"/>
+
+			<scripting:execute doc:name="Sleep for 30s until the processing is completed" doc:id="b09fe305-3000-4571-b824-8b555395ccb7" engine="groovy">
+				<scripting:code >sleep(30000)</scripting:code>
+			</scripting:execute>
+			<db:select doc:name="Select User, which should be updated in instance B" doc:id="b8bfa469-3264-4609-89a2-fd46f479533d" config-ref="Database_Config">
+				<db:sql >SELECT Id, FirstName FROM User WHERE Email = :email</db:sql>
+				<db:input-parameters ><![CDATA[#[{'email' : vars.sfdcUser[0].Email}]]]></db:input-parameters>
+			</db:select>
+			<munit-tools:assert-that doc:name="Assert that User was not updated" doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[payload[0].FirstName]" is="#[MunitTools::equalTo(vars.dbUser.FirstName)]"/>
+			<db:select doc:name="Select User, which should be migrated to instance B" doc:id="7f03fd94-2d32-4cfc-80e2-d895df0daa28" config-ref="Database_Config">
+				<db:sql >SELECT Id, FirstName FROM User WHERE Email = :email</db:sql>
+				<db:input-parameters ><![CDATA[#[{'email' : vars.sfdcUser[1].Email} ]]]></db:input-parameters>
+			</db:select>
+			<munit-tools:assert-that doc:name="Assert that we found migrated User" doc:id="720f5247-b3db-4630-872f-94a23fa2973d" is="#[MunitTools::equalTo(vars.updatedUsers[1].FirstName)]" expression="#[payload[0].FirstName]"/>
+			<db:delete doc:name="Delete migrated Accounts from B" doc:id="ce3a0677-3c86-4dc8-bdc5-e318e6c5dd29" config-ref="Database_Config">
+				<db:sql >DELETE FROM User WHERE Email = :email</db:sql>
+				<db:input-parameters ><![CDATA[#[{'email' : vars.updatedUsers[1].Email}]]]></db:input-parameters>
+			</db:delete>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="f493dab3-9757-4253-beeb-b4c4b9e27f22" processor="db:bulk-insert" times="1"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-suite-dbQueryFlowTest" description="Test" doc:id="a1717021-c9a9-4eaf-8798-43d65a776cc3">
+		<munit:execution >
+			<scripting:execute doc:name="Sleep for 10s before we start tests" doc:id="68f96218-bb52-4fbc-92c8-1b014988e3e2" engine="groovy">
+				<scripting:code >sleep(10000)</scripting:code>
+			</scripting:execute>
+			<set-variable value="#['${from.db.to.sfdc.profilesMap}']" doc:name="Set Variable sfdc2dbProfilesMap" doc:id="11941d2f-5f9a-4144-8822-d867f7f96598" variableName="db2sfdcProfilesMap"/>
+			<flow-ref doc:name="queryDatabaseFlow" doc:id="e0479714-bce3-4ea8-9fbc-1c8ed7b5d185" name="queryDatabaseFlow"/>
+		<flow-ref doc:name="syncFromDatabaseToSalesforce" doc:id="5592c1fa-6dc8-4956-b894-e0e2b025918f" name="syncFromDatabaseToSalesforce"/>
+			<scripting:execute doc:name="Sleep for 30s until the processing is completed" doc:id="b09fe305-3000-4571-b824-8b555395ccb7" engine="groovy">
+				<scripting:code >sleep(30000)</scripting:code>
+			</scripting:execute>
+			<salesforce:query doc:name="Select User which should be updated in instance A" doc:id="e0a08c39-130d-4252-a34a-ff0758bd20d5" config-ref="Salesforce_Sfdc_config">
+				<salesforce:salesforce-query >SELECT Id, FirstName FROM User WHERE Email = ':email'</salesforce:salesforce-query>
+				<salesforce:parameters ><![CDATA[#[output applicaton/java
+---
+{
+	"email" : vars.dbUser.Email
+}]]]></salesforce:parameters>
+			</salesforce:query>
+			<munit-tools:assert-that doc:name="Assert that we find updated Account" doc:id="1e559409-a86b-47b9-bb44-cbcac54c4ade" expression="#[payload[0].FirstName]" is="#[MunitTools::equalTo(vars.dbUser.FirstName)]"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify call" doc:id="62b85095-b6a4-4d75-9423-3500b1816b42" processor="salesforce:upsert-bulk" times="1"/>
+		</munit:validation>
+	</munit:test>
+
+	<munit:after-test name="test-suiteAfter_Test" description="After tests actions" doc:id="5b85bb9e-67e6-47f7-8f71-53a39f147fc8" >
+		<db:delete doc:name="Delete created user from Database" doc:id="5650b4a4-80f3-465d-91cb-ab865a37595c" config-ref="Database_Config">
+			<db:sql >DELETE FROM User WHERE Email = :email</db:sql>
+			<db:input-parameters ><![CDATA[#['email': vars.dbUser.Email]]]></db:input-parameters>
+		</db:delete>
+		<salesforce:update doc:name="Update users in Salesforce" doc:id="f42592d2-5f66-40d3-bd74-6cd64e20e27c" config-ref="Salesforce_Sfdc_config" type="User">
+			<salesforce:records ><![CDATA[#[vars.sfdcUser]]]></salesforce:records>
+		</salesforce:update>
+
+</munit:after-test>
+
+</mule>

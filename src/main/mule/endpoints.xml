@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns:os="http://www.mulesoft.org/schema/mule/os" 
-	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns="http://www.mulesoft.org/schema/mule/core" 
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
-http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 <flow name="schedulerFlow" doc:id="aff4106d-d2f6-4366-940a-a380dcb1cf73" >
 		<scheduler doc:name="Scheduler" doc:id="58b7c776-fbee-4753-9bea-f6cc3e037efd" >
 			<scheduling-strategy >
@@ -53,7 +54,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 	</flow>
 		<flow name="querySalesforceFlow">
 		<os:retrieve key="watermark" target="lastQueryDateSFDC" doc:name="Retrieve lastQueryDateSfdc" objectStore="watermarkStoreSFDC">
-        	<os:default-value><![CDATA[${sfdc.watermark.default.expression}]]></os:default-value>
+        	<os:default-value><![CDATA[#[${sfdc.watermark.default.expression}]]]></os:default-value>
     	</os:retrieve>
     	<salesforce:query doc:name="Query Accounts from Salesforce" doc:id="b6ee7f69-41e5-4cce-9d6f-5e1901002515" config-ref="Salesforce_Sfdc_config">
 			<salesforce:salesforce-query >SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username, CommunityNickname 
@@ -67,24 +68,33 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 }]]]></salesforce:parameters>
 		</salesforce:query>
 		<os:store key="watermark" failOnNullValue="false" objectStore="watermarkStoreSFDC" doc:name="Store lastQueryDateSfdc">
-        <os:value><![CDATA[#[max(payload map $.LastModifiedDate)]]]></os:value>
+        <os:value><![CDATA[#[max(payload map $.LastModifiedDate) as String]]]></os:value>
     </os:store>
 </flow>
 <flow name="queryDatabaseFlow">
 		<os:retrieve key="watermark" objectStore="watermarkStoreDB" target="lastQueryDateDB" doc:name="Retrieve lastQueryDateDB">
-        <os:default-value><![CDATA[${db.watermark.default.expression}]]></os:default-value>
+        <os:default-value><![CDATA[#[${db.watermark.default.expression}]]]></os:default-value>
     </os:retrieve>
-    <db:select doc:name="Select Accounts from DB" doc:id="4d6d6589-52f5-4493-9d97-92729058cd26" config-ref="Database_Config">
-			<db:sql >
-			SELECT Alias, CommunityNickname, Email,EmailEncodingKey, FirstName,LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Title, Username 
+    <ee:transform doc:name="Prepare sqldate" doc:id="826fca54-4eff-4129-b39b-ced60412d936" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	sqldate:   ((vars.lastQueryDateDB as DateTime)  >> |+00:00|) as String { format: "YYYY-MM-dd HH:mm:ss" }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:select doc:name="Select Accounts from DB" doc:id="4d6d6589-52f5-4493-9d97-92729058cd26" config-ref="Database_Config">
+			<db:sql >SELECT Alias, CommunityNickname, Email,EmailEncodingKey, FirstName,LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Title, Username 
 			FROM User 
 			WHERE LastModifiedDate  &gt; :lastUpdate AND LastModifiedById != '${db.integration.user.id}' 
 			ORDER BY LastModifiedDate ASC
 </db:sql>
-			<db:input-parameters ><![CDATA[#[{'lastUpdate' : vars.lastQueryDateDB}]]]></db:input-parameters>
+			<db:input-parameters ><![CDATA[#[{'lastUpdate' : payload.sqldate}]]]></db:input-parameters>
 		</db:select>
 		<os:store key="watermark" failOnNullValue="false" objectStore="watermarkStoreDB" doc:name="Store lastQueryDateDB">
-        <os:value><![CDATA[#[max(payload map $.LastModifiedDate)]]]></os:value>
+        <os:value><![CDATA[#[max(payload map $.LastModifiedDate) as String]]]></os:value>
     </os:store>
 </flow>
 </mule>
