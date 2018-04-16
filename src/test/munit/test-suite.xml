@@ -18,6 +18,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	<configuration-properties doc:name="Configuration properties" file="common.properties" />
 	<configuration-properties doc:name="Configuration properties" file="mule-artifact.properties" />
 	
+	<configuration-properties doc:name="Configuration properties" doc:id="89d4bd0f-c5e1-4b44-ad76-4d12760a00f9" file="mule.test.properties" />
 	<munit:before-test name="test-suiteBefore_Test" description="Before tests actions" >
       <salesforce:query doc:name="Select existed Users" doc:id="55388bd7-5ccc-498b-a241-18df8d446bc0" config-ref="Salesforce_Sfdc_config" target="sfdcUser">
 			<salesforce:salesforce-query >SELECT Alias, EmailEncodingKey, LanguageLocaleKey, LocaleSidKey, TimeZoneSidKey, CommunityNickname, ProfileId, Username, FirstName, LastName, Id, Email From User WHERE Email IN  ('${email.user1}', '${email.user2}')</salesforce:salesforce-query>
