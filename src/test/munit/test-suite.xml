@@ -14,10 +14,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 	<munit:config name="new-test-suite.xml" />
-	<configuration-properties doc:name="Configuration properties" file="mule.${mule.env}.properties" />
 	<configuration-properties doc:name="Configuration properties" file="common.properties" />
-	<configuration-properties doc:name="Configuration properties" file="mule-artifact.properties" />
-	
 	<configuration-properties doc:name="Configuration properties" doc:id="89d4bd0f-c5e1-4b44-ad76-4d12760a00f9" file="mule.test.properties" />
 	<munit:before-test name="test-suiteBefore_Test" description="Before tests actions" >
       <salesforce:query doc:name="Select existed Users" doc:id="55388bd7-5ccc-498b-a241-18df8d446bc0" config-ref="Salesforce_Sfdc_config" target="sfdcUser">
@@ -49,6 +46,9 @@ output application/java
 		<salesforce:update doc:name="Update users in Salesforce" doc:id="af009fb6-6355-46cf-90c2-78bffa00a517" config-ref="Salesforce_Sfdc_config" type="User">
 			<salesforce:records ><![CDATA[#[vars.updatedUsers]]]></salesforce:records>
 		</salesforce:update>
+		<scripting:execute doc:name="Sleep for 10s before we start tests" doc:id="39b83e09-4737-4de0-91fe-c2f55529e5fd" engine="groovy">
+			<scripting:code >sleep(10000)</scripting:code>
+		</scripting:execute>
 		<ee:transform doc:name="Prepare user for Database" doc:id="df382cd7-6599-41b6-8758-c4603f092d42">
          <ee:message>
          </ee:message>
