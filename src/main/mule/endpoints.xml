@@ -54,7 +54,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	</flow>
 		<flow name="querySalesforceFlow">
 		<os:retrieve key="watermark" target="lastQueryDateSFDC" doc:name="Retrieve lastQueryDateSfdc" objectStore="watermarkStoreSFDC">
-        	<os:default-value><![CDATA[#[${sfdc.watermark.default.expression}]]]></os:default-value>
+        	<os:default-value><![CDATA[[${sfdc.watermark.default.expression}]]]></os:default-value>
     	</os:retrieve>
     	<salesforce:query doc:name="Query Accounts from Salesforce" doc:id="b6ee7f69-41e5-4cce-9d6f-5e1901002515" config-ref="Salesforce_Sfdc_config">
 			<salesforce:salesforce-query >SELECT Alias, Email, EmailEncodingKey, FirstName, LanguageLocaleKey, LastModifiedById, LastModifiedDate, LastName, LocaleSidKey, ProfileId, TimeZoneSidKey, Username, CommunityNickname 
@@ -73,7 +73,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 </flow>
 <flow name="queryDatabaseFlow">
 		<os:retrieve key="watermark" objectStore="watermarkStoreDB" target="lastQueryDateDB" doc:name="Retrieve lastQueryDateDB">
-        <os:default-value><![CDATA[#[${db.watermark.default.expression}]]]></os:default-value>
+        <os:default-value><![CDATA[[${db.watermark.default.expression}]]]></os:default-value>
     </os:retrieve>
     <ee:transform doc:name="Prepare sqldate" doc:id="826fca54-4eff-4129-b39b-ced60412d936" >
 			<ee:message >
