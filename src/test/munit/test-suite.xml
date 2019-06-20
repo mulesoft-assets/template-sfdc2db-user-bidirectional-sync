@@ -121,12 +121,12 @@ output application/java
 				<db:sql >SELECT Id, FirstName FROM User WHERE Email = :email</db:sql>
 				<db:input-parameters ><![CDATA[#[{'email' : vars.sfdcUser[0].Email}]]]></db:input-parameters>
 			</db:select>
-			<munit-tools:assert-that doc:name="Assert that User was not updated" doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[payload[0].FirstName]" is="#[MunitTools::equalTo(vars.dbUser.FirstName)]"/>
+			<munit-tools:assert-that doc:name="Assert that User was not updated" doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[payload[0].FirstName]" is="#[MunitTools::equalTo(vars.dbUser.FirstName)]" message="Assert that User was not updated has failed"/>
 			<db:select doc:name="Select User, which should be migrated to instance B" doc:id="7f03fd94-2d32-4cfc-80e2-d895df0daa28" config-ref="Database_Config">
 				<db:sql >SELECT Id, FirstName FROM User WHERE Email = :email</db:sql>
 				<db:input-parameters ><![CDATA[#[{'email' : vars.sfdcUser[1].Email} ]]]></db:input-parameters>
 			</db:select>
-			<munit-tools:assert-that doc:name="Assert that we found migrated User" doc:id="720f5247-b3db-4630-872f-94a23fa2973d" is="#[MunitTools::equalTo(vars.updatedUsers[1].FirstName)]" expression="#[payload[0].FirstName]"/>
+			<munit-tools:assert-that doc:name="Assert that we found migrated User" doc:id="720f5247-b3db-4630-872f-94a23fa2973d" is="#[MunitTools::equalTo(vars.updatedUsers[1].FirstName)]" expression="#[payload[0].FirstName]" message="Assert that we found migrated User has failed"/>
 			<db:delete doc:name="Delete migrated Accounts from B" doc:id="ce3a0677-3c86-4dc8-bdc5-e318e6c5dd29" config-ref="Database_Config">
 				<db:sql >DELETE FROM User WHERE Email = :email</db:sql>
 				<db:input-parameters ><![CDATA[#[{'email' : vars.updatedUsers[1].Email}]]]></db:input-parameters>
@@ -155,7 +155,7 @@ output application/java
 	"email" : vars.dbUser.Email
 }]]]></salesforce:parameters>
 			</salesforce:query>
-			<munit-tools:assert-that doc:name="Assert that we find updated Account" doc:id="1e559409-a86b-47b9-bb44-cbcac54c4ade" expression="#[payload[0].FirstName]" is="#[MunitTools::equalTo(vars.dbUser.FirstName)]"/>
+			<munit-tools:assert-that doc:name="Assert that we find updated Account" doc:id="1e559409-a86b-47b9-bb44-cbcac54c4ade" expression="#[payload[0].FirstName]" is="#[MunitTools::equalTo(vars.dbUser.FirstName)]" message="Assert that we find updated Account has failed"/>
 		</munit:execution>
 		<munit:validation >
 			<munit-tools:verify-call doc:name="Verify call" doc:id="62b85095-b6a4-4d75-9423-3500b1816b42" processor="salesforce:upsert-bulk" times="1"/>
